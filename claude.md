@@ -44,7 +44,7 @@ Create JSON credential files in `~/.config/tdx/`:
   "TDX_BASE_URL": "https://solutions.teamdynamix.com/TDWebApi",
   "TDX_USERNAME": "your-username",
   "TDX_PASSWORD": "your-password",
-  "TDX_APP_ID": "129"
+  "TDX_TICKET_APP_IDS": "129"
 }
 ```
 
@@ -54,7 +54,7 @@ Create JSON credential files in `~/.config/tdx/`:
   "TDX_BASE_URL": "http://localhost/TDDM/TDWorkManagement",
   "TDX_USERNAME": "your-dev-username",
   "TDX_PASSWORD": "your-dev-password",
-  "TDX_APP_ID": "627"
+  "TDX_TICKET_APP_IDS": "627"
 }
 ```
 
@@ -75,7 +75,7 @@ Create JSON credential files in `~/.config/tdx/`:
     "tdx-api-mcp-dev": {
       "type": "stdio",
       "command": "node",
-      "args": ["C:/source/mcp/tdx-api-mcp/distindex.js"],
+      "args": ["C:/source/mcp/tdx-api-mcp/dist/index.js"],
       "env": {
         "TDX_CREDENTIALS_FILE": "C:\\Users\\[username]\\.config\\tdx\\dev-credentials.json"
       }
@@ -127,7 +127,7 @@ Create a `.env` file in the project root:
 TDX_BASE_URL=https://your-instance.teamdynamix.com/TDWebApi
 TDX_USERNAME=your-username
 TDX_PASSWORD=your-password
-TDX_APP_ID=627
+TDX_TICKET_APP_IDS=627
 ```
 
 **Important:** Base URL must include the API path:
@@ -135,10 +135,10 @@ TDX_APP_ID=627
 - Sandbox: `https://instance.teamdynamix.com/SBTDWebApi`
 - Local dev: `http://localhost/TDDev/TDWebApi` or `http://localhost/TDDM/TDWorkManagement`
 
-**TDX_APP_ID Configuration:**
+**TDX_TICKET_APP_IDS Configuration:**
 - **Required** - TeamDynamix API requires an application ID for all ticket operations
-- **Single app**: `TDX_APP_ID=627` (only search in IT ticketing app)
-- **Multiple apps**: `TDX_APP_ID=627,11,2` (comma-separated, enables auto-discovery)
+- **Single app**: `TDX_TICKET_APP_IDS=627` (only search in IT ticketing app)
+- **Multiple apps**: `TDX_TICKET_APP_IDS=627,11,2` (comma-separated, enables auto-discovery)
 - **How to find**: Check the URL when viewing a ticket in TeamDynamix frontend (e.g., `/Apps/627/Tickets/...`)
 - **Common app IDs**: 2 (IT), 11 (Facilities), 627 (custom apps vary by organization)
 
@@ -180,8 +180,8 @@ These run direct API tests against TDXClient operations. Fast iteration: edit co
 1. Check for `TDX_CREDENTIALS_FILE` environment variable
 2. If set → Load JSON file and populate `process.env`
 3. If not set → Fallback to `.env` file parsing (backward compatibility)
-4. Validate required variables: `TDX_BASE_URL`, `TDX_USERNAME`, `TDX_PASSWORD`, `TDX_APP_ID`
-5. Parse comma-separated `TDX_APP_ID` into array
+4. Validate required variables: `TDX_BASE_URL`, `TDX_USERNAME`, `TDX_PASSWORD`, `TDX_TICKET_APP_IDS`
+5. Parse comma-separated `TDX_TICKET_APP_IDS` into array
 6. Initialize TDXClient with credentials
 
 ### Authentication Flow
@@ -280,7 +280,7 @@ The MCP server implements automatic app ID discovery for ticket operations when 
 - The number after `/Apps/` is your app ID
 
 **Method 2: Trial and Error**
-- Try common app IDs: `TDX_APP_ID=2,11,627`
+- Try common app IDs: `TDX_TICKET_APP_IDS=2,11,627`
 - Server will automatically find which ones you have access to
 
 ## Field Name Conversions
@@ -389,7 +389,7 @@ To add additional environments (staging, testing, etc.):
 
 **Problem**: Ticket not found (404 error)
 - **Cause**: Ticket doesn't exist in any of your configured app IDs
-- **Solution**: Verify ticket exists in TeamDynamix frontend, check which app it belongs to, add that app ID to `TDX_APP_ID`
+- **Solution**: Verify ticket exists in TeamDynamix frontend, check which app it belongs to, add that app ID to `TDX_TICKET_APP_IDS`
 
 **Problem**: Slow ticket lookups with many app IDs
 - **Cause**: Server tries each app ID sequentially on first lookup

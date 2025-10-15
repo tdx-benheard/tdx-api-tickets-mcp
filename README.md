@@ -48,7 +48,7 @@ npm run build
     "tdx-api-mcp": {
       "type": "stdio",
       "command": "node",
-      "args": ["C:/source/mcp/tdx-api-mcp/build/index.js"],
+      "args": ["C:/source/mcp/tdx-api-mcp/dist/index.js"],
       "env": {
         "TDX_CREDENTIALS_FILE": "C:\\Users\\[username]\\.config\\tdx\\prod-credentials.json"
       }
@@ -310,8 +310,8 @@ The server interacts with the following TeamDynamix API endpoints:
 - `POST /api/auth` - Authentication
 - `POST /api/{appId}/tickets/search` - Search tickets
 - `GET /api/{appId}/tickets/{id}` - Get ticket
-- `PUT /api/{appId}/tickets/{id}` - Edit ticket (full update)
-- `PATCH /api/{appId}/tickets/{id}` - Update ticket (partial)
+- `POST /api/{appId}/tickets/{id}` - Edit ticket (full update)
+- `POST /api/{appId}/tickets/{id}` - Update ticket (partial update via fetch+merge)
 - `POST /api/{appId}/tickets/{id}/feed` - Add feed entry
 - `GET /api/reports` - List reports
 - `POST /api/reports/search` - Search reports

@@ -71,19 +71,19 @@ if (credentialsFile) {
 const TDX_BASE_URL = process.env.TDX_BASE_URL || '';
 const TDX_USERNAME = process.env.TDX_USERNAME || '';
 const TDX_PASSWORD = process.env.TDX_PASSWORD || '';
-const TDX_APP_ID = process.env.TDX_APP_ID || '';
+const TDX_TICKET_APP_IDS = process.env.TDX_TICKET_APP_IDS || '';
 
-if (!TDX_BASE_URL || !TDX_USERNAME || !TDX_PASSWORD || !TDX_APP_ID) {
-  console.error('Missing required environment variables: TDX_BASE_URL, TDX_USERNAME, TDX_PASSWORD, TDX_APP_ID');
+if (!TDX_BASE_URL || !TDX_USERNAME || !TDX_PASSWORD || !TDX_TICKET_APP_IDS) {
+  console.error('Missing required environment variables: TDX_BASE_URL, TDX_USERNAME, TDX_PASSWORD, TDX_TICKET_APP_IDS');
   console.error('Set TDX_CREDENTIALS_FILE environment variable to point to a JSON credentials file, or use .env file');
   process.exit(1);
 }
 
 // Parse comma-separated app IDs
-const appIds = TDX_APP_ID.split(',').map(id => id.trim()).filter(id => id.length > 0);
+const appIds = TDX_TICKET_APP_IDS.split(',').map(id => id.trim()).filter(id => id.length > 0);
 
 if (appIds.length === 0) {
-  console.error('TDX_APP_ID must contain at least one valid application ID');
+  console.error('TDX_TICKET_APP_IDS must contain at least one valid application ID');
   process.exit(1);
 }
 

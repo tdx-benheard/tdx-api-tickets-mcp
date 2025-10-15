@@ -15,9 +15,9 @@ const credentials = JSON.parse(readFileSync(credentialsFile, 'utf8'));
 const TDX_BASE_URL = credentials.TDX_BASE_URL;
 const TDX_USERNAME = credentials.TDX_USERNAME;
 const TDX_PASSWORD = credentials.TDX_PASSWORD;
-const TDX_APP_ID = credentials.TDX_APP_ID;
+const TDX_TICKET_APP_IDS = credentials.TDX_TICKET_APP_IDS;
 
-const appIds = TDX_APP_ID.split(',').map((id: string) => id.trim());
+const appIds = TDX_TICKET_APP_IDS.split(',').map((id: string) => id.trim());
 
 console.log('🔧 TeamDynamix People API Test Suite (Development Environment)');
 console.log('='.repeat(60));

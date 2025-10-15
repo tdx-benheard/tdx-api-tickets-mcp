@@ -17,7 +17,7 @@ async function testStatusChange() {
   const baseUrl = credentials.TDX_BASE_URL;
   const username = credentials.TDX_USERNAME;
   const password = credentials.TDX_PASSWORD;
-  const appId = credentials.TDX_APP_ID;
+  const appId = credentials.TDX_TICKET_APP_IDS;
 
   if (!baseUrl || !username || !password || !appId) {
     throw new Error('Missing required credentials in file');
