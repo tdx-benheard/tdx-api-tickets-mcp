@@ -4,8 +4,9 @@
 
 **Completed:**
 - ✅ Multi-app ID support with automatic ticket discovery and caching
-- ✅ All ticket operations (search, get, update, edit, add feed)
+- ✅ All ticket operations (search, get, update, edit, add feed, tags)
 - ✅ Report operations fixed to match API spec (POST for search, withData parameter)
+- ✅ People API operations (get user, search users, get current user, get UID)
 - ✅ App ID discovery documentation
 - ✅ Comprehensive troubleshooting guide
 - ✅ Multiple instance support with separate credentials per environment
@@ -16,6 +17,7 @@
 - ✅ Ticket search, get, update operations
 - ✅ Report listing (returns all reports)
 - ✅ Report running with data (withData=true confirmed working via direct API test)
+- ✅ People API (get user, search users, get current user, get UID)
 - ✅ Credential loading from JSON files
 - ✅ Multiple server instances (production + development) with separate credentials
 
@@ -200,19 +202,43 @@ MCP call → Handler → Transform params → HTTP request → Auth interceptor 
 
 ## API Endpoints
 
+### Tickets
 ```
-POST   /api/auth                        # Authentication
 POST   /api/{appId}/tickets/search      # Search tickets
 GET    /api/{appId}/tickets/{id}        # Get ticket (Note: Does NOT return tags due to API rollback)
-POST   /api/{appId}/tickets/{id}        # Edit (full update)
-PATCH  /api/{appId}/tickets/{id}        # Update (partial)
+POST   /api/{appId}/tickets/{id}        # Edit (full update, requires all fields)
+POST   /api/{appId}/tickets/{id}        # Update (partial - automatically merges with current ticket)
 POST   /api/{appId}/tickets/{id}/feed   # Add comment
 POST   /api/{appId}/tickets/{id}/tags   # Add tags (returns empty string on success)
 DELETE /api/{appId}/tickets/{id}/tags   # Delete tags (returns empty string on success)
+```
+
+### Reports
+```
 GET    /api/reports                     # List reports (global, filter by AppID)
 POST   /api/reports/search              # Search reports (global, filter by AppID)
 GET    /api/reports/{id}                # Run report
 ```
+
+### People
+```
+GET    /api/people/{uid}                # Get user by UID
+GET    /api/people/{username}           # Get user by username
+GET    /api/people/getuid/{username}    # Get user UID by username
+GET    /api/people/lookup               # Search users (restricted lookup, partial info)
+```
+
+### Authentication
+```
+POST   /api/auth                        # Authentication (returns JWT token)
+```
+
+**Important Note on Ticket Updates:**
+- `tdx_edit_ticket`: Full update requiring all mandatory fields (TypeID, FormID, Title, AccountID, StatusID, PriorityID, RequestorUid)
+- `tdx_update_ticket`: Partial update - automatically fetches current ticket and merges your changes
+  - Just pass the fields you want to change: `{ StatusID: 5184, Comments: "Updated status" }`
+  - The MCP server handles fetching and merging with existing ticket data
+  - Both use POST endpoint (PATCH requires complex JSON Patch document format)
 
 **Important Note on Tags:**
 - POST and DELETE `/tags` endpoints work correctly

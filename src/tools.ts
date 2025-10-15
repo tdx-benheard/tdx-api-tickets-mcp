@@ -267,4 +267,61 @@ export const tools: Tool[] = [
       required: ['reportId'],
     },
   },
+  {
+    name: 'tdx_get_user',
+    description: 'Get a TeamDynamix user by UID or username',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        uid: {
+          type: 'string',
+          description: 'User UID (GUID) to retrieve',
+        },
+        username: {
+          type: 'string',
+          description: 'Username to retrieve (alternative to uid)',
+        },
+      },
+    },
+  },
+  {
+    name: 'tdx_get_current_user',
+    description: 'Get the currently authenticated TeamDynamix user (based on credentials)',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'tdx_search_users',
+    description: 'Search for TeamDynamix users',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        searchText: {
+          type: 'string',
+          description: 'Text to search for in user records (name, email, username)',
+        },
+        maxResults: {
+          type: 'number',
+          description: 'Maximum number of results to return (default: 50, max: 100)',
+          default: 50,
+        },
+      },
+    },
+  },
+  {
+    name: 'tdx_get_user_uid',
+    description: 'Get a user UID (GUID) by username',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        username: {
+          type: 'string',
+          description: 'Username to look up',
+        },
+      },
+      required: ['username'],
+    },
+  },
 ];

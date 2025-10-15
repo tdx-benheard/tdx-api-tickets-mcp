@@ -147,6 +147,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'tdx_run_report':
         return await handlers.handleRunReport(args);
 
+      case 'tdx_get_user':
+        return await handlers.handleGetUser(args);
+
+      case 'tdx_get_current_user':
+        return await handlers.handleGetCurrentUser(args);
+
+      case 'tdx_search_users':
+        return await handlers.handleSearchUsers(args);
+
+      case 'tdx_get_user_uid':
+        return await handlers.handleGetUserUid(args);
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

@@ -7,9 +7,11 @@ export class TDXClient {
   private appIds: string[];
   private ticketAppIdCache: Map<number, string>;
   private client: AxiosInstance;
+  private username: string;
 
   constructor(baseUrl: string, username: string, password: string, appIds: string | string[]) {
     this.baseUrl = baseUrl;
+    this.username = username;
     this.appIds = Array.isArray(appIds) ? appIds : [appIds];
     this.ticketAppIdCache = new Map();
     this.auth = new TDXAuth({ baseUrl, username, password });
@@ -222,6 +224,45 @@ export class TDXClient {
     const response = await this.client.get(`/api/reports/${reportId}`, {
       params: Object.keys(params).length > 0 ? params : undefined
     });
+    return response.data;
+  }
+
+  // People API Methods
+
+  // Get user by UID or username
+  async getUser(uid?: string, username?: string) {
+    if (!uid && !username) {
+      throw new Error('Either uid or username must be provided');
+    }
+
+    const identifier = uid || username;
+    const response = await this.client.get(`/api/people/${identifier}`);
+    return response.data;
+  }
+
+  // Get current authenticated user (using username from credentials)
+  async getCurrentUser() {
+    const response = await this.client.get(`/api/people/${this.username}`);
+    return response.data;
+  }
+
+  // Search users using lookup endpoint (restricted lookup, returns partial info)
+  async searchUsers(searchText: string = '', maxResults: number = 50) {
+    // Ensure maxResults is within API limits (1-100)
+    const limitedResults = Math.min(Math.max(maxResults, 1), 100);
+
+    const params: any = {
+      searchText,
+      maxResults: limitedResults
+    };
+
+    const response = await this.client.get('/api/people/lookup', { params });
+    return response.data;
+  }
+
+  // Get user UID by username
+  async getUserUid(username: string) {
+    const response = await this.client.get(`/api/people/getuid/${username}`);
     return response.data;
   }
 }

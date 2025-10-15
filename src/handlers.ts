@@ -185,4 +185,63 @@ export class ToolHandlers {
       ],
     };
   }
+
+  async handleGetUser(args: any) {
+    if (!args?.uid && !args?.username) {
+      throw new Error('Either uid or username is required');
+    }
+
+    const user = await this.tdxClient.getUser(args?.uid, args?.username);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(user, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleGetCurrentUser(args: any) {
+    const user = await this.tdxClient.getCurrentUser();
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(user, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleSearchUsers(args: any) {
+    const searchText = args?.searchText || '';
+    const maxResults = args?.maxResults || 50;
+
+    const users = await this.tdxClient.searchUsers(searchText, maxResults);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(users, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleGetUserUid(args: any) {
+    if (!args?.username) {
+      throw new Error('username is required');
+    }
+
+    const uid = await this.tdxClient.getUserUid(args.username);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ username: args.username, uid }, null, 2),
+        },
+      ],
+    };
+  }
 }
