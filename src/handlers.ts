@@ -244,4 +244,180 @@ export class ToolHandlers {
       ],
     };
   }
+
+  async handleSearchGroups(args: any) {
+    const searchText = args?.searchText || '';
+    const maxResults = args?.maxResults || 50;
+
+    const groups = await this.tdxClient.searchGroups(searchText, maxResults);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(groups, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleGetGroup(args: any) {
+    if (!args?.groupId) {
+      throw new Error('groupId is required');
+    }
+
+    const group = await this.tdxClient.getGroup(args.groupId as number);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(group, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleListGroups(args: any) {
+    const maxResults = args?.maxResults || 100;
+
+    const groups = await this.tdxClient.listGroups(maxResults);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(groups, null, 2),
+        },
+      ],
+    };
+  }
+
+  // Time API Handlers
+
+  async handleSearchTimeEntries(args: any) {
+    const searchParams: any = {};
+
+    if (args?.startDate) searchParams.StartDate = args.startDate;
+    if (args?.endDate) searchParams.EndDate = args.endDate;
+    if (args?.userUid) searchParams.UserUid = args.userUid;
+    if (args?.ticketId) searchParams.TicketID = args.ticketId;
+    if (args?.projectId) searchParams.ProjectID = args.projectId;
+    if (args?.maxResults) searchParams.MaxResults = args.maxResults;
+
+    const timeEntries = await this.tdxClient.searchTimeEntries(searchParams);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(timeEntries, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleGetTimeEntry(args: any) {
+    if (!args?.timeEntryId) {
+      throw new Error('timeEntryId is required');
+    }
+
+    const timeEntry = await this.tdxClient.getTimeEntry(args.timeEntryId as number);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(timeEntry, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleCreateTimeEntry(args: any) {
+    if (!args?.timeEntryData) {
+      throw new Error('timeEntryData is required');
+    }
+
+    const result = await this.tdxClient.createTimeEntry(args.timeEntryData);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleUpdateTimeEntry(args: any) {
+    if (!args?.timeEntryId || !args?.timeEntryData) {
+      throw new Error('timeEntryId and timeEntryData are required');
+    }
+
+    const result = await this.tdxClient.updateTimeEntry(args.timeEntryId as number, args.timeEntryData);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleDeleteTimeEntry(args: any) {
+    if (!args?.timeEntryId) {
+      throw new Error('timeEntryId is required');
+    }
+
+    await this.tdxClient.deleteTimeEntry(args.timeEntryId as number);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'Time entry deleted successfully.',
+        },
+      ],
+    };
+  }
+
+  async handleGetTimeReport(args: any) {
+    if (!args?.reportDate) {
+      throw new Error('reportDate is required');
+    }
+
+    const report = await this.tdxClient.getTimeReport(args.reportDate, args?.userUid);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(report, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleListTimeTypes(args: any) {
+    const timeTypes = await this.tdxClient.listTimeTypes();
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(timeTypes, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleGetTimeType(args: any) {
+    if (!args?.timeTypeId) {
+      throw new Error('timeTypeId is required');
+    }
+
+    const timeType = await this.tdxClient.getTimeType(args.timeTypeId as number);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(timeType, null, 2),
+        },
+      ],
+    };
+  }
 }

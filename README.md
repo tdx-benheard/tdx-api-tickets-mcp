@@ -1,6 +1,6 @@
 # TeamDynamix API MCP Server
 
-An MCP (Model Context Protocol) server for interacting with the TeamDynamix Web API. This server provides tools for managing tickets and running reports through the TeamDynamix platform.
+An MCP (Model Context Protocol) server for interacting with the TeamDynamix Web API. This server provides tools for managing tickets, time entries, people, groups, and running reports through the TeamDynamix platform.
 
 ## Setup
 
@@ -214,6 +214,168 @@ Delete tags from a TeamDynamix ticket.
 
 **Note:** Returns success message when tags are deleted.
 
+---
+
+### People Management
+
+#### `tdx_get_user`
+Get a TeamDynamix user by UID or username.
+
+**Parameters:**
+- `uid` (string, optional): User UID (GUID) to retrieve
+- `username` (string, optional): Username to retrieve (alternative to uid)
+
+**Note:** Either `uid` or `username` must be provided.
+
+---
+
+#### `tdx_get_current_user`
+Get the currently authenticated TeamDynamix user (based on credentials).
+
+**Parameters:** None
+
+---
+
+#### `tdx_search_users`
+Search for TeamDynamix users.
+
+**Parameters:**
+- `searchText` (string, optional): Text to search for in user records (name, email, username)
+- `maxResults` (number, optional): Maximum number of results to return (default: 50, max: 100)
+
+---
+
+#### `tdx_get_user_uid`
+Get a user UID (GUID) by username.
+
+**Parameters:**
+- `username` (string, required): Username to look up
+
+---
+
+### Group Management
+
+#### `tdx_search_groups`
+Search for TeamDynamix groups.
+
+**Parameters:**
+- `searchText` (string, optional): Text to search for in group names
+- `maxResults` (number, optional): Maximum number of results to return (default: 50, max: 100)
+
+---
+
+#### `tdx_get_group`
+Get a TeamDynamix group by ID.
+
+**Parameters:**
+- `groupId` (number, required): Group ID to retrieve
+
+---
+
+#### `tdx_list_groups`
+List all available TeamDynamix groups.
+
+**Parameters:**
+- `maxResults` (number, optional): Maximum number of results to return (default: 100)
+
+---
+
+### Time & Expense Management
+
+#### `tdx_search_time_entries`
+Search for TeamDynamix time entries using various criteria.
+
+**Parameters:**
+- `startDate` (string, optional): Start date for time entries (ISO 8601 format: YYYY-MM-DD)
+- `endDate` (string, optional): End date for time entries (ISO 8601 format: YYYY-MM-DD)
+- `userUid` (string, optional): UID of user to search time entries for
+- `ticketId` (number, optional): Ticket ID to filter time entries by
+- `projectId` (number, optional): Project ID to filter time entries by
+- `maxResults` (number, optional): Maximum number of results to return (default: 50)
+
+---
+
+#### `tdx_get_time_entry`
+Get a TeamDynamix time entry by ID.
+
+**Parameters:**
+- `timeEntryId` (number, required): ID of the time entry to retrieve
+
+---
+
+#### `tdx_create_time_entry`
+Create a new TeamDynamix time entry.
+
+**Parameters:**
+- `timeEntryData` (object, required): Time entry data including hours, date, description, etc.
+
+**Common Time Entry Fields:**
+```javascript
+{
+  DateWorked: "2025-10-15",      // Required: Date in ISO format
+  Minutes: 120,                   // Required: Duration in minutes
+  TimeTypeID: 3406,              // Required: Time type ID
+  Description: "Work description",
+
+  // Component association (at least one required)
+  TicketID: 555058,              // Associate with ticket
+  ProjectID: 12345,              // Associate with project
+
+  // Optional fields
+  BillTo: "Client name",
+  BillRate: 100.00,
+  IsBillable: true,
+  IsActive: true
+}
+```
+
+---
+
+#### `tdx_update_time_entry`
+Update an existing TeamDynamix time entry.
+
+**Parameters:**
+- `timeEntryId` (number, required): ID of the time entry to update
+- `timeEntryData` (object, required): Updated time entry data
+
+---
+
+#### `tdx_delete_time_entry`
+Delete a TeamDynamix time entry.
+
+**Parameters:**
+- `timeEntryId` (number, required): ID of the time entry to delete
+
+**Note:** Time entries can only be deleted by the user who created them or an Admin Service Account.
+
+---
+
+#### `tdx_get_time_report`
+Get weekly time report (timesheet) for a user.
+
+**Parameters:**
+- `reportDate` (string, required): Any date within the week to get report for (ISO 8601 format: YYYY-MM-DD)
+- `userUid` (string, optional): UID of user to get report for (defaults to current user)
+
+**Note:** The report returns timesheet data for the entire week containing the specified date.
+
+---
+
+#### `tdx_list_time_types`
+List all active time types.
+
+**Parameters:** None
+
+---
+
+#### `tdx_get_time_type`
+Get a specific time type by ID.
+
+**Parameters:**
+- `timeTypeId` (number, required): ID of the time type to retrieve
+
+---
+
 ### Report Management
 
 #### `tdx_list_reports`
@@ -307,15 +469,44 @@ All tools include error handling that returns descriptive error messages. Common
 ## API Endpoints Used
 
 The server interacts with the following TeamDynamix API endpoints:
+
+**Authentication:**
 - `POST /api/auth` - Authentication
+
+**Tickets:**
 - `POST /api/{appId}/tickets/search` - Search tickets
 - `GET /api/{appId}/tickets/{id}` - Get ticket
 - `POST /api/{appId}/tickets/{id}` - Edit ticket (full update)
 - `POST /api/{appId}/tickets/{id}` - Update ticket (partial update via fetch+merge)
 - `POST /api/{appId}/tickets/{id}/feed` - Add feed entry
+- `POST /api/{appId}/tickets/{id}/tags` - Add tags to ticket
+- `DELETE /api/{appId}/tickets/{id}/tags` - Delete tags from ticket
+
+**Reports:**
 - `GET /api/reports` - List reports
 - `POST /api/reports/search` - Search reports
 - `GET /api/reports/{id}` - Run report
+
+**People:**
+- `GET /api/people/{uid}` - Get user by UID
+- `GET /api/people/{username}` - Get user by username
+- `GET /api/people/getuid/{username}` - Get user UID by username
+- `GET /api/people/lookup` - Search users
+
+**Groups:**
+- `POST /api/groups/search` - Search/list groups
+- `GET /api/groups/{id}` - Get group by ID
+
+**Time & Expense:**
+- `POST /api/time/search` - Search time entries
+- `GET /api/time/{id}` - Get time entry
+- `POST /api/time` - Create time entries (bulk)
+- `PUT /api/time/{id}` - Update time entry
+- `DELETE /api/time/{id}` - Delete time entry
+- `GET /api/time/report/{reportDate}` - Get time report (current user)
+- `GET /api/time/report/{reportDate}/{uid}` - Get time report (specific user)
+- `GET /api/time/types` - List time types
+- `GET /api/time/types/{id}` - Get time type
 
 ## Additional Documentation
 

@@ -159,6 +159,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'tdx_get_user_uid':
         return await handlers.handleGetUserUid(args);
 
+      case 'tdx_search_groups':
+        return await handlers.handleSearchGroups(args);
+
+      case 'tdx_get_group':
+        return await handlers.handleGetGroup(args);
+
+      case 'tdx_list_groups':
+        return await handlers.handleListGroups(args);
+
+      case 'tdx_search_time_entries':
+        return await handlers.handleSearchTimeEntries(args);
+
+      case 'tdx_get_time_entry':
+        return await handlers.handleGetTimeEntry(args);
+
+      case 'tdx_create_time_entry':
+        return await handlers.handleCreateTimeEntry(args);
+
+      case 'tdx_update_time_entry':
+        return await handlers.handleUpdateTimeEntry(args);
+
+      case 'tdx_delete_time_entry':
+        return await handlers.handleDeleteTimeEntry(args);
+
+      case 'tdx_get_time_report':
+        return await handlers.handleGetTimeReport(args);
+
+      case 'tdx_list_time_types':
+        return await handlers.handleListTimeTypes(args);
+
+      case 'tdx_get_time_type':
+        return await handlers.handleGetTimeType(args);
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

@@ -16,3 +16,17 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Temporary documentation
+working-on*.md
+*.notes.md
+*investigation*.md
+
+# One-off test files
+src/test-*-prod.ts
+src/test-delete-*.ts
+src/test-patch-*.ts
+src/test-status-*.ts
+
+# Claude settings (local only)
+.claude/settings.local.json

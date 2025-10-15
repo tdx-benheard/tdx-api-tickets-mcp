@@ -324,4 +324,184 @@ export const tools: Tool[] = [
       required: ['username'],
     },
   },
+  {
+    name: 'tdx_search_groups',
+    description: 'Search for TeamDynamix groups',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        searchText: {
+          type: 'string',
+          description: 'Text to search for in group names',
+        },
+        maxResults: {
+          type: 'number',
+          description: 'Maximum number of results to return (default: 50, max: 100)',
+          default: 50,
+        },
+      },
+    },
+  },
+  {
+    name: 'tdx_get_group',
+    description: 'Get a TeamDynamix group by ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        groupId: {
+          type: 'number',
+          description: 'Group ID to retrieve',
+        },
+      },
+      required: ['groupId'],
+    },
+  },
+  {
+    name: 'tdx_list_groups',
+    description: 'List all available TeamDynamix groups',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxResults: {
+          type: 'number',
+          description: 'Maximum number of results to return (default: 100)',
+          default: 100,
+        },
+      },
+    },
+  },
+  {
+    name: 'tdx_search_time_entries',
+    description: 'Search for TeamDynamix time entries using various criteria',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        startDate: {
+          type: 'string',
+          description: 'Start date for time entries (ISO 8601 format: YYYY-MM-DD)',
+        },
+        endDate: {
+          type: 'string',
+          description: 'End date for time entries (ISO 8601 format: YYYY-MM-DD)',
+        },
+        userUid: {
+          type: 'string',
+          description: 'UID of user to search time entries for',
+        },
+        ticketId: {
+          type: 'number',
+          description: 'Ticket ID to filter time entries by',
+        },
+        projectId: {
+          type: 'number',
+          description: 'Project ID to filter time entries by',
+        },
+        maxResults: {
+          type: 'number',
+          description: 'Maximum number of results to return (default: 50)',
+          default: 50,
+        },
+      },
+    },
+  },
+  {
+    name: 'tdx_get_time_entry',
+    description: 'Get a TeamDynamix time entry by ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        timeEntryId: {
+          type: 'number',
+          description: 'ID of the time entry to retrieve',
+        },
+      },
+      required: ['timeEntryId'],
+    },
+  },
+  {
+    name: 'tdx_create_time_entry',
+    description: 'Create a new TeamDynamix time entry',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        timeEntryData: {
+          type: 'object',
+          description: 'Time entry data including hours, date, description, etc.',
+        },
+      },
+      required: ['timeEntryData'],
+    },
+  },
+  {
+    name: 'tdx_update_time_entry',
+    description: 'Update an existing TeamDynamix time entry',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        timeEntryId: {
+          type: 'number',
+          description: 'ID of the time entry to update',
+        },
+        timeEntryData: {
+          type: 'object',
+          description: 'Updated time entry data',
+        },
+      },
+      required: ['timeEntryId', 'timeEntryData'],
+    },
+  },
+  {
+    name: 'tdx_delete_time_entry',
+    description: 'Delete a TeamDynamix time entry',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        timeEntryId: {
+          type: 'number',
+          description: 'ID of the time entry to delete',
+        },
+      },
+      required: ['timeEntryId'],
+    },
+  },
+  {
+    name: 'tdx_get_time_report',
+    description: 'Get weekly time report (timesheet) for a user',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        reportDate: {
+          type: 'string',
+          description: 'Any date within the week to get report for (ISO 8601 format: YYYY-MM-DD)',
+        },
+        userUid: {
+          type: 'string',
+          description: 'Optional: UID of user to get report for (defaults to current user)',
+        },
+      },
+      required: ['reportDate'],
+    },
+  },
+  {
+    name: 'tdx_list_time_types',
+    description: 'List all active time types',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'tdx_get_time_type',
+    description: 'Get a specific time type by ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        timeTypeId: {
+          type: 'number',
+          description: 'ID of the time type to retrieve',
+        },
+      },
+      required: ['timeTypeId'],
+    },
+  },
 ];

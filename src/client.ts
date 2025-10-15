@@ -265,4 +265,85 @@ export class TDXClient {
     const response = await this.client.get(`/api/people/getuid/${username}`);
     return response.data;
   }
+
+  // Groups API Methods
+
+  // Search groups using POST search endpoint
+  async searchGroups(searchText: string = '', maxResults: number = 50) {
+    // Ensure maxResults is within API limits (1-100)
+    const limitedResults = Math.min(Math.max(maxResults, 1), 100);
+
+    const response = await this.client.post('/api/groups/search', {
+      SearchText: searchText,
+      MaxResults: limitedResults
+    });
+    return response.data;
+  }
+
+  // Get group by ID
+  async getGroup(groupId: number) {
+    const response = await this.client.get(`/api/groups/${groupId}`);
+    return response.data;
+  }
+
+  // List all groups (uses POST with search body)
+  async listGroups(maxResults: number = 100) {
+    const response = await this.client.post('/api/groups/search', {
+      MaxResults: maxResults
+    });
+    return response.data;
+  }
+
+  // Time API Methods
+
+  // Search time entries using POST search endpoint
+  async searchTimeEntries(searchParams: any) {
+    const response = await this.client.post('/api/time/search', searchParams);
+    return response.data;
+  }
+
+  // Get time entry by ID
+  async getTimeEntry(timeEntryId: number) {
+    const response = await this.client.get(`/api/time/${timeEntryId}`);
+    return response.data;
+  }
+
+  // Create time entry (POST /api/time accepts array, but we'll send single entry)
+  async createTimeEntry(timeEntryData: any) {
+    const response = await this.client.post('/api/time', [timeEntryData]);
+    return response.data;
+  }
+
+  // Update time entry using PUT
+  async updateTimeEntry(timeEntryId: number, timeEntryData: any) {
+    const response = await this.client.put(`/api/time/${timeEntryId}`, timeEntryData);
+    return response.data;
+  }
+
+  // Delete time entry
+  async deleteTimeEntry(timeEntryId: number) {
+    const response = await this.client.delete(`/api/time/${timeEntryId}`);
+    return response.data;
+  }
+
+  // Get time report (weekly timesheet)
+  async getTimeReport(reportDate: string, userUid?: string) {
+    const endpoint = userUid
+      ? `/api/time/report/${reportDate}/${userUid}`
+      : `/api/time/report/${reportDate}`;
+    const response = await this.client.get(endpoint);
+    return response.data;
+  }
+
+  // List all active time types
+  async listTimeTypes() {
+    const response = await this.client.get('/api/time/types');
+    return response.data;
+  }
+
+  // Get specific time type by ID
+  async getTimeType(timeTypeId: number) {
+    const response = await this.client.get(`/api/time/types/${timeTypeId}`);
+    return response.data;
+  }
 }

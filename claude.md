@@ -7,6 +7,8 @@
 - ✅ All ticket operations (search, get, update, edit, add feed, tags)
 - ✅ Report operations fixed to match API spec (POST for search, withData parameter)
 - ✅ People API operations (get user, search users, get current user, get UID)
+- ✅ Groups API operations (search groups, get group, list groups)
+- ✅ Time API operations (search entries, get entry, create, update, delete, get reports, list types)
 - ✅ App ID discovery documentation
 - ✅ Comprehensive troubleshooting guide
 - ✅ Multiple instance support with separate credentials per environment
@@ -18,6 +20,8 @@
 - ✅ Report listing (returns all reports)
 - ✅ Report running with data (withData=true confirmed working via direct API test)
 - ✅ People API (get user, search users, get current user, get UID)
+- ✅ Groups API (search groups, get group, list groups)
+- ✅ Time API (search time entries, get time entry, get time report, list time types)
 - ✅ Credential loading from JSON files
 - ✅ Multiple server instances (production + development) with separate credentials
 
@@ -228,6 +232,33 @@ GET    /api/people/getuid/{username}    # Get user UID by username
 GET    /api/people/lookup               # Search users (restricted lookup, partial info)
 ```
 
+### Groups
+```
+POST   /api/groups/search               # Search/list groups (with optional SearchText and MaxResults)
+GET    /api/groups/{id}                 # Get group by ID
+```
+
+### Time (Time & Expense Tracking)
+```
+POST   /api/time/search                 # Search time entries
+GET    /api/time/{id}                   # Get time entry by ID
+POST   /api/time                        # Create time entries (accepts array)
+PUT    /api/time/{id}                   # Update time entry
+DELETE /api/time/{id}                   # Delete time entry
+GET    /api/time/report/{reportDate}    # Get weekly time report (timesheet) for current user
+GET    /api/time/report/{reportDate}/{uid} # Get weekly time report for specific user
+GET    /api/time/types                  # List all active time types
+GET    /api/time/types/{id}             # Get specific time type
+```
+
+**Important Notes on Time API:**
+- Time entries can only be created/edited/deleted by the user who owns them or an Admin Service Account
+- Requires access to TDTimeExpense application
+- The `/api/time` POST endpoint accepts an array of time entries (for bulk creation)
+- The MCP server wraps single entries in an array automatically
+- Time reports return weekly timesheet data for a given date (any date within the target week)
+- **Expenses are managed through the Time API** - there is no separate Expenses API section
+
 ### Authentication
 ```
 POST   /api/auth                        # Authentication (returns JWT token)
@@ -295,6 +326,13 @@ API uses PascalCase, MCP tools use camelCase:
 | `priorityIds` | `PriorityIDs` |
 | `comments` | `Comments` |
 | `isPrivate` | `IsPrivate` |
+| `startDate` | `StartDate` |
+| `endDate` | `EndDate` |
+| `userUid` | `UserUid` |
+| `ticketId` | `TicketID` |
+| `projectId` | `ProjectID` |
+| `timeEntryId` | (Time entry ID in URL path) |
+| `timeTypeId` | (Time type ID in URL path) |
 
 ## Constraints
 
