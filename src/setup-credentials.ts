@@ -188,6 +188,55 @@ async function selectEnvironment(): Promise<string> {
   }
 }
 
+function getDefaultUrlForEnvironment(env: string): string {
+  switch (env) {
+    case 'prod':
+      return 'https://solutions.teamdynamix.com/TDWebApi';
+    case 'dev':
+      return 'http://localhost/TDDev/TDWebApi';
+    case 'canary':
+      return 'https://eng.teamdynamixcanary.com/TDWebApi';
+    default:
+      return 'https://solutions.teamdynamix.com/TDWebApi';
+  }
+}
+
+async function promptForUrl(environment: string): Promise<string> {
+  const defaultUrl = getDefaultUrlForEnvironment(environment);
+
+  console.log('\n📍 Enter your TeamDynamix instance domain');
+  console.log(`   Default for ${environment}: ${defaultUrl}`);
+  console.log('   Or enter a custom domain (e.g., "your-company.teamdynamix.com")');
+  console.log('   Press Enter to use default, or type "custom" for custom URL');
+
+  const answer = (await question('\nDomain (or "custom"): ')).trim();
+
+  if (!answer) {
+    // Use default
+    return defaultUrl;
+  }
+
+  if (answer.toLowerCase() === 'custom') {
+    console.log('\n   Enter complete API URL:');
+    const customUrl = (await question('   URL: ')).trim().replace(/\/+$/, '');
+    if (!customUrl) throw new Error('URL is required');
+    return customUrl;
+  }
+
+  // Treat as domain, construct full URL
+  let domain = answer;
+  // Remove protocol if provided
+  domain = domain.replace(/^https?:\/\//, '');
+  // Remove trailing slashes
+  domain = domain.replace(/\/.*$/, '');
+
+  // Construct full URL
+  const protocol = environment === 'dev' ? 'http' : 'https';
+  const path = environment === 'dev' ? '/TDDev/TDWebApi' : '/TDWebApi';
+
+  return `${protocol}://${domain}${path}`;
+}
+
 async function selectConfigLocation(): Promise<'global' | 'project'> {
   console.log('\n🔧 Where should the MCP server be available?');
   console.log('[1] Global - Available in all Claude Code projects');
@@ -420,13 +469,7 @@ async function main() {
         selectedAppIds = currentAppIds;
       } else if (option === '2') {
         // Update everything
-        console.log('\n📍 Enter your TeamDynamix instance URL');
-        console.log('   Examples:');
-        console.log('   • https://solutions.teamdynamix.com/TDWebApi');
-        console.log('   • http://localhost/TDDev/TDWebApi');
-
-        baseUrl = (await question('\nBase URL: ')).trim().replace(/\/+$/, '');
-        if (!baseUrl) throw new Error('Base URL is required');
+        baseUrl = await promptForUrl(environment);
 
         username = (await question('\n👤 Username: ')).trim();
         if (!username) throw new Error('Username is required');
@@ -460,13 +503,7 @@ async function main() {
       }
     } else {
       // No existing credentials, prompt for everything
-      console.log('\n📍 Enter your TeamDynamix instance URL');
-      console.log('   Examples:');
-      console.log('   • https://solutions.teamdynamix.com/TDWebApi');
-      console.log('   • http://localhost/TDDev/TDWebApi');
-
-      baseUrl = (await question('\nBase URL: ')).trim().replace(/\/+$/, '');
-      if (!baseUrl) throw new Error('Base URL is required');
+      baseUrl = await promptForUrl(environment);
 
       username = (await question('\n👤 Username: ')).trim();
       if (!username) throw new Error('Username is required');

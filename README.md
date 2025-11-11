@@ -133,6 +133,8 @@ The setup script is non-destructive and will:
 - Merge with existing `.mcp.json` files (won't overwrite other MCP servers)
 - Preserve existing `.claude/settings.local.json` settings
 
+**Need to uninstall?** See [UNINSTALL.md](./UNINSTALL.md) for complete removal instructions.
+
 ---
 
 ## Manual Setup (Advanced)
