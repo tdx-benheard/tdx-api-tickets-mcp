@@ -4,45 +4,12 @@ import { Tool } from '@modelcontextprotocol/sdk/types.js';
 const environmentParam = {
   environment: {
     type: 'string' as const,
-    description: 'Environment to use: "prod" for production, "dev" for development. Defaults to prod.',
-    enum: ['prod', 'dev'],
+    description: 'Environment to use: "prod" for production, "dev" for development, "canary" for canary testing. Defaults to prod.',
+    enum: ['prod', 'dev', 'canary'],
   },
 };
 
 export const tools: Tool[] = [
-  {
-    name: 'tdx_search_tickets',
-    description: 'Search for TeamDynamix tickets using various criteria',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ...environmentParam,
-        searchText: {
-          type: 'string',
-          description: 'Text to search for in tickets',
-        },
-        maxResults: {
-          type: 'number',
-          description: 'Maximum number of results to return (default: 50)',
-          default: 50,
-        },
-        statusIds: {
-          type: 'array',
-          items: { type: 'number' },
-          description: 'Array of status IDs to filter by',
-        },
-        priorityIds: {
-          type: 'array',
-          items: { type: 'number' },
-          description: 'Array of priority IDs to filter by',
-        },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID to search in (overrides default)',
-        },
-      },
-    },
-  },
   {
     name: 'tdx_get_ticket',
     description: 'Get a TeamDynamix ticket by ID',
@@ -167,6 +134,30 @@ export const tools: Tool[] = [
     },
   },
   {
+    name: 'tdx_get_ticket_feed',
+    description: 'Get feed entries (comments/updates) for a TeamDynamix ticket. Returns up to 10 recent entries by default.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...environmentParam,
+        ticketId: {
+          type: 'number',
+          description: 'ID of the ticket to get feed entries from',
+        },
+        top: {
+          type: 'number',
+          description: 'Maximum number of feed entries to return (default: 10, 0 returns all)',
+          default: 10,
+        },
+        appId: {
+          type: 'string',
+          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
+        },
+      },
+      required: ['ticketId'],
+    },
+  },
+  {
     name: 'tdx_add_ticket_tags',
     description: 'Add tags to a TeamDynamix ticket. Note: Tags are stored but not returned in GET responses due to API limitations.',
     inputSchema: {
@@ -235,7 +226,7 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_search_reports',
-    description: 'Search for TeamDynamix reports by name',
+    description: 'Search for TeamDynamix reports by name. Use this to find reports like "All Open Tickets", "Open Tickets", "In Progress", etc. before running them with tdx_run_report. Common patterns: "open", "in progress", "closed", "all tickets".',
     inputSchema: {
       type: 'object',
       properties: {
@@ -259,7 +250,7 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_run_report',
-    description: 'Run a TeamDynamix report by ID and get the results',
+    description: 'Run a TeamDynamix report to retrieve ticket lists (PREFERRED for listing multiple tickets - much more efficient than search). Supports client-side filtering and pagination. Use tdx_search_reports to find reports like "All Open Tickets", "Open Tickets", etc.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -281,6 +272,36 @@ export const tools: Tool[] = [
           type: 'string',
           description: 'Optional: Sort expression for report data',
           default: '',
+        },
+        page: {
+          type: 'number',
+          description: 'Optional: Page number to retrieve (1-based, alternative to offset/limit)',
+        },
+        pageSize: {
+          type: 'number',
+          description: 'Optional: Number of rows per page (default: 50, used with page parameter)',
+          default: 50,
+        },
+        limit: {
+          type: 'number',
+          description: 'Optional: Limit results to N rows (applied after fetching from API, alternative to page/pageSize)',
+        },
+        offset: {
+          type: 'number',
+          description: 'Optional: Skip first N rows (applied after fetching from API, default: 0, used with limit)',
+          default: 0,
+        },
+        filterResponsibleFullName: {
+          type: 'string',
+          description: 'Optional: Filter report rows by ResponsibleFullName column (case-insensitive partial match)',
+        },
+        filterStatusName: {
+          type: 'string',
+          description: 'Optional: Filter report rows by StatusName column (case-insensitive partial match)',
+        },
+        filterText: {
+          type: 'string',
+          description: 'Optional: Search all text columns for this value (case-insensitive)',
         },
       },
       required: ['reportId'],

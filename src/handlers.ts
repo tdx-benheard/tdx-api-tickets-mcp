@@ -1,4 +1,23 @@
 import { TDXClient } from './client.js';
+import { truncateToTokenLimit } from './utils.js';
+import type {
+  GetTicketArgs,
+  EditTicketArgs,
+  UpdateTicketArgs,
+  AddTicketFeedArgs,
+  GetTicketFeedArgs,
+  TicketTagsArgs,
+  ListReportsArgs,
+  SearchReportsArgs,
+  RunReportArgs,
+  GetUserArgs,
+  GetCurrentUserArgs,
+  SearchUsersArgs,
+  GetUserUidArgs,
+  SearchGroupsArgs,
+  GetGroupArgs,
+  ListGroupsArgs
+} from './types.js';
 
 export class ToolHandlers {
   constructor(
@@ -18,33 +37,13 @@ export class ToolHandlers {
     return client;
   }
 
-  async handleSearchTickets(args: any) {
-    const client = this.getClient(args?.environment);
-    const searchParams: any = {};
-
-    if (args?.searchText) searchParams.SearchText = args.searchText;
-    if (args?.maxResults) searchParams.MaxResults = args.maxResults;
-    if (args?.statusIds) searchParams.StatusIDs = args.statusIds;
-    if (args?.priorityIds) searchParams.PriorityIDs = args.priorityIds;
-
-    const results = await client.searchTickets(searchParams, args?.appId);
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    };
-  }
-
-  async handleGetTicket(args: any) {
+  async handleGetTicket(args: GetTicketArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.ticketId) {
       throw new Error('ticketId is required');
     }
 
-    const ticket = await client.getTicket(args.ticketId as number, args?.appId);
+    const ticket = await client.getTicket(args.ticketId, args?.appId);
     return {
       content: [
         {
@@ -55,13 +54,13 @@ export class ToolHandlers {
     };
   }
 
-  async handleEditTicket(args: any) {
+  async handleEditTicket(args: EditTicketArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.ticketId || !args?.ticketData) {
       throw new Error('ticketId and ticketData are required');
     }
 
-    const result = await client.editTicket(args.ticketId as number, args.ticketData, args?.appId);
+    const result = await client.editTicket(args.ticketId, args.ticketData, args?.appId);
     return {
       content: [
         {
@@ -72,7 +71,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleUpdateTicket(args: any) {
+  async handleUpdateTicket(args: UpdateTicketArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.ticketId) {
       throw new Error('ticketId is required');
@@ -88,7 +87,7 @@ export class ToolHandlers {
     if (args.responsibleUid) updateData.ResponsibleUid = args.responsibleUid;
     if (args.tags) updateData.Tags = args.tags;
 
-    const result = await client.updateTicket(args.ticketId as number, updateData, args?.appId);
+    const result = await client.updateTicket(args.ticketId, updateData, args?.appId);
     return {
       content: [
         {
@@ -99,7 +98,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleAddTicketFeed(args: any) {
+  async handleAddTicketFeed(args: AddTicketFeedArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.ticketId || !args?.comments) {
       throw new Error('ticketId and comments are required');
@@ -112,7 +111,7 @@ export class ToolHandlers {
 
     if (args.notify) feedEntry.Notify = args.notify;
 
-    const result = await client.addTicketFeedEntry(args.ticketId as number, feedEntry, args?.appId);
+    const result = await client.addTicketFeedEntry(args.ticketId, feedEntry, args?.appId);
     return {
       content: [
         {
@@ -123,13 +122,31 @@ export class ToolHandlers {
     };
   }
 
-  async handleAddTicketTags(args: any) {
+  async handleGetTicketFeed(args: GetTicketFeedArgs) {
+    const client = this.getClient(args?.environment);
+    if (!args?.ticketId) {
+      throw new Error('ticketId is required');
+    }
+
+    const top = args?.top !== undefined ? args.top : 10;
+    const result = await client.getTicketFeed(args.ticketId, top, args?.appId);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleAddTicketTags(args: TicketTagsArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.ticketId || !args?.tags) {
       throw new Error('ticketId and tags are required');
     }
 
-    const result = await client.addTicketTags(args.ticketId as number, args.tags, args?.appId);
+    await client.addTicketTags(args.ticketId, args.tags, args?.appId);
     return {
       content: [
         {
@@ -140,13 +157,13 @@ export class ToolHandlers {
     };
   }
 
-  async handleDeleteTicketTags(args: any) {
+  async handleDeleteTicketTags(args: TicketTagsArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.ticketId || !args?.tags) {
       throw new Error('ticketId and tags are required');
     }
 
-    const result = await client.deleteTicketTags(args.ticketId as number, args.tags, args?.appId);
+    await client.deleteTicketTags(args.ticketId, args.tags, args?.appId);
     return {
       content: [
         {
@@ -157,7 +174,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleListReports(args: any) {
+  async handleListReports(args: ListReportsArgs) {
     const client = this.getClient(args?.environment);
     const maxResults = args?.maxResults || 100;
     const reports = await client.listReports(maxResults, args?.appId);
@@ -171,7 +188,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleSearchReports(args: any) {
+  async handleSearchReports(args: SearchReportsArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.searchText) {
       throw new Error('searchText is required');
@@ -189,29 +206,135 @@ export class ToolHandlers {
     };
   }
 
-  async handleRunReport(args: any) {
+  async handleRunReport(args: RunReportArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.reportId) {
       throw new Error('reportId is required');
     }
 
     const results = await client.runReport(
-      args.reportId as number,
+      args.reportId,
       args?.appId,
       args?.withData || false,
       args?.dataSortExpression || ''
     );
+
+    // Apply client-side filtering and pagination if DataRows exist
+    if (results.DataRows && Array.isArray(results.DataRows)) {
+      let filteredRows = results.DataRows;
+      const originalRowCount = filteredRows.length;
+
+      // Apply all filters in a single pass for better performance (O(n) instead of O(3n))
+      const hasFilters = args?.filterResponsibleFullName ||
+                        args?.filterStatusName || args?.filterText;
+
+      if (hasFilters) {
+        // Prepare filter terms once
+        const responsibleNameTerm = args?.filterResponsibleFullName?.toLowerCase();
+        const statusNameTerm = args?.filterStatusName?.toLowerCase();
+        const textSearchTerm = args?.filterText?.toLowerCase();
+
+        filteredRows = filteredRows.filter((row: any) => {
+          // Filter by ResponsibleFullName
+          if (responsibleNameTerm && !row.ResponsibleFullName?.toLowerCase().includes(responsibleNameTerm)) {
+            return false;
+          }
+
+          // Filter by StatusName
+          if (statusNameTerm && !row.StatusName?.toLowerCase().includes(statusNameTerm)) {
+            return false;
+          }
+
+          // Text search across all columns
+          if (textSearchTerm) {
+            const matchFound = Object.values(row).some((val: any) =>
+              val?.toString().toLowerCase().includes(textSearchTerm)
+            );
+            if (!matchFound) {
+              return false;
+            }
+          }
+
+          return true;
+        });
+      }
+
+      // Calculate pagination parameters
+      let offset = 0;
+      let limit: number | undefined;
+      let page: number | undefined;
+      let pageSize = 50;
+
+      // Support both page/pageSize and offset/limit
+      if (args?.page !== undefined) {
+        page = Math.max(1, args.page); // Ensure page is at least 1
+        pageSize = args?.pageSize || 50;
+        offset = (page - 1) * pageSize;
+        limit = pageSize;
+      } else {
+        offset = args?.offset || 0;
+        limit = args?.limit;
+        if (limit !== undefined) {
+          pageSize = limit;
+          page = Math.floor(offset / pageSize) + 1;
+        }
+      }
+
+      const totalRowsAfterFilter = filteredRows.length;
+
+      // Apply pagination
+      let paginatedRows = filteredRows;
+      if (limit !== undefined) {
+        paginatedRows = filteredRows.slice(offset, offset + limit);
+      } else if (offset > 0) {
+        paginatedRows = filteredRows.slice(offset);
+      }
+
+      // Add pagination metadata
+      if (page !== undefined || limit !== undefined) {
+        const currentPage = page || Math.floor(offset / (limit || pageSize)) + 1;
+        const totalPages = Math.ceil(totalRowsAfterFilter / pageSize);
+
+        results.Pagination = {
+          currentPage,
+          pageSize,
+          totalRows: totalRowsAfterFilter,
+          totalPages,
+          hasNextPage: currentPage < totalPages,
+          hasPrevPage: currentPage > 1,
+          returnedRows: paginatedRows.length
+        };
+      }
+
+      results.DataRows = paginatedRows;
+
+      // Log filtering information
+      if (args?.filterResponsibleFullName || args?.filterStatusName || args?.filterText) {
+        if (totalRowsAfterFilter < originalRowCount) {
+          console.error(`[Handlers] Filtered ${originalRowCount} rows down to ${totalRowsAfterFilter}`);
+        }
+      }
+    }
+
+    // Apply token limit truncation
+    const { data, truncated, message } = truncateToTokenLimit(results);
+
+    let responseText = JSON.stringify(data, null, 2);
+    if (truncated && message) {
+      responseText = `${message}\n\n${responseText}`;
+    }
+
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(results, null, 2),
+          text: responseText,
         },
       ],
     };
   }
 
-  async handleGetUser(args: any) {
+  async handleGetUser(args: GetUserArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.uid && !args?.username) {
       throw new Error('Either uid or username is required');
@@ -228,7 +351,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleGetCurrentUser(args: any) {
+  async handleGetCurrentUser(args: GetCurrentUserArgs) {
     const client = this.getClient(args?.environment);
     const user = await client.getCurrentUser();
     return {
@@ -241,7 +364,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleSearchUsers(args: any) {
+  async handleSearchUsers(args: SearchUsersArgs) {
     const client = this.getClient(args?.environment);
     const searchText = args?.searchText || '';
     const maxResults = args?.maxResults || 50;
@@ -257,7 +380,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleGetUserUid(args: any) {
+  async handleGetUserUid(args: GetUserUidArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.username) {
       throw new Error('username is required');
@@ -274,7 +397,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleSearchGroups(args: any) {
+  async handleSearchGroups(args: SearchGroupsArgs) {
     const client = this.getClient(args?.environment);
     const searchText = args?.searchText || '';
     const maxResults = args?.maxResults || 50;
@@ -290,13 +413,13 @@ export class ToolHandlers {
     };
   }
 
-  async handleGetGroup(args: any) {
+  async handleGetGroup(args: GetGroupArgs) {
     const client = this.getClient(args?.environment);
     if (!args?.groupId) {
       throw new Error('groupId is required');
     }
 
-    const group = await client.getGroup(args.groupId as number);
+    const group = await client.getGroup(args.groupId);
     return {
       content: [
         {
@@ -307,7 +430,7 @@ export class ToolHandlers {
     };
   }
 
-  async handleListGroups(args: any) {
+  async handleListGroups(args: ListGroupsArgs) {
     const client = this.getClient(args?.environment);
     const maxResults = args?.maxResults || 100;
 
