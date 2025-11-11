@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "tdx-api-tickets-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["./dist/index.js"],
+      "env": {
+        "TDX_PROD_CREDENTIALS_FILE": "~/.config/tdx-mcp/prod-credentials.json",
+        "TDX_DEV_CREDENTIALS_FILE": "~/.config/tdx-mcp/dev-credentials.json",
+        "TDX_CANARY_CREDENTIALS_FILE": "~/.config/tdx-mcp/canary-credentials.json",
+        "TDX_DEFAULT_ENVIRONMENT": "prod"
+      }
+    }
+  }
+}

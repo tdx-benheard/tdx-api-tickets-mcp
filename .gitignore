@@ -6,9 +6,6 @@
 # Node modules
 node_modules/
 
-# Build output
-dist/
-
 # IDE
 .vscode/
 .idea/
@@ -30,3 +27,6 @@ src/test-status-*.ts
 
 # Claude settings (local only)
 .claude/settings.local.json
+
+# Note: .mcp.json in THIS directory is committed (uses env vars)
+# The setup script creates user-specific .mcp.json files in OTHER projects

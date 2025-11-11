@@ -1,10 +1,11 @@
 import { readFileSync, existsSync } from 'fs';
 import { TDXClient } from './client.js';
+import { decodePassword, validateEnvVars } from './utils.js';
 import { homedir } from 'os';
 import { join } from 'path';
 
 // Load production credentials from JSON file
-const credPath = join(homedir(), '.config', 'tdx', 'prod-credentials.json');
+const credPath = join(homedir(), '.config', 'tdx-mcp', 'prod-credentials.json');
 
 if (!existsSync(credPath)) {
   console.error('❌ Production credentials file not found:', credPath);
@@ -15,17 +16,16 @@ const credentials = JSON.parse(readFileSync(credPath, 'utf8'));
 
 const TDX_BASE_URL = credentials.TDX_BASE_URL || '';
 const TDX_USERNAME = credentials.TDX_USERNAME || '';
-let TDX_PASSWORD = credentials.TDX_PASSWORD || '';
+const TDX_PASSWORD = credentials.TDX_PASSWORD || '';
 const TDX_TICKET_APP_IDS = credentials.TDX_TICKET_APP_IDS || '';
 
-// Decode base64 password if prefixed with "base64:"
-if (TDX_PASSWORD.startsWith('base64:')) {
-  const encodedPassword = TDX_PASSWORD.substring(7); // Remove "base64:" prefix
-  TDX_PASSWORD = Buffer.from(encodedPassword, 'base64').toString('utf8');
-  console.log('Decoded base64-encoded password');
-}
-
-if (!TDX_BASE_URL || !TDX_USERNAME || !TDX_PASSWORD || !TDX_TICKET_APP_IDS) {
+// Validate required fields
+try {
+  validateEnvVars(
+    { TDX_BASE_URL, TDX_USERNAME, TDX_PASSWORD, TDX_TICKET_APP_IDS },
+    ['TDX_BASE_URL', 'TDX_USERNAME', 'TDX_PASSWORD', 'TDX_TICKET_APP_IDS']
+  );
+} catch (error) {
   console.error('❌ Missing required fields in credentials file');
   console.error('   TDX_BASE_URL:', TDX_BASE_URL ? '✓' : '✗');
   console.error('   TDX_USERNAME:', TDX_USERNAME ? '✓' : '✗');
@@ -33,6 +33,9 @@ if (!TDX_BASE_URL || !TDX_USERNAME || !TDX_PASSWORD || !TDX_TICKET_APP_IDS) {
   console.error('   TDX_TICKET_APP_IDS:', TDX_TICKET_APP_IDS ? '✓' : '✗');
   process.exit(1);
 }
+
+// Decode password
+const decodedPassword = decodePassword(TDX_PASSWORD);
 
 // Parse comma-separated app IDs
 const appIds = TDX_TICKET_APP_IDS.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0);
@@ -43,7 +46,7 @@ console.log('Username:', TDX_USERNAME);
 console.log('App IDs:', appIds.join(', '));
 console.log('---\n');
 
-const client = new TDXClient(TDX_BASE_URL, TDX_USERNAME, TDX_PASSWORD, appIds);
+const client = new TDXClient(TDX_BASE_URL, TDX_USERNAME, decodedPassword, appIds);
 
 async function testSearchTickets() {
   console.log('📋 Testing: Search Tickets');
@@ -169,6 +172,37 @@ async function testAuth() {
   }
 }
 
+async function testGetTicketFeed() {
+  console.log('💬 Testing: Get Ticket Feed');
+  try {
+    // Get a ticket to test with
+    const tickets = await client.searchTickets({ MaxResults: 1 });
+    if (!tickets || tickets.length === 0) {
+      console.log('⏭️  Skipping: No tickets found');
+      return true;
+    }
+
+    const ticketId = tickets[0].ID;
+    console.log(`   Getting feed for ticket #${ticketId}`);
+
+    const feed = await client.getTicketFeed(ticketId, 5);
+    const count = Array.isArray(feed) ? feed.length : 0;
+    console.log(`✅ Retrieved ${count} feed entries`);
+    if (count > 0) {
+      console.log(`   Latest: "${feed[0].Body?.slice(0, 50)}..."`);
+      console.log(`   By: ${feed[0].CreatedFullName}`);
+      console.log(`   Date: ${feed[0].CreatedDate}`);
+    }
+    return true;
+  } catch (error: any) {
+    console.error('❌ Error:', error.response?.status, error.message);
+    if (error.response?.data) {
+      console.error('   Response:', JSON.stringify(error.response.data).slice(0, 200));
+    }
+    return false;
+  }
+}
+
 async function testTagOperations() {
   console.log('🏷️  Testing: Tag Operations');
   try {
@@ -211,6 +245,7 @@ async function runTests() {
     listReports: await testListReports(),
     runReport: await testRunReport(),
     getTicket: await testGetTicket(),
+    getTicketFeed: await testGetTicketFeed(),
     tagOperations: await testTagOperations(),
   };
 
@@ -221,6 +256,7 @@ async function runTests() {
   console.log(`   List Reports:      ${results.listReports ? '✅' : '❌'}`);
   console.log(`   Run Report:        ${results.runReport ? '✅' : '❌'}`);
   console.log(`   Get Ticket:        ${results.getTicket ? '✅' : '❌'}`);
+  console.log(`   Get Ticket Feed:   ${results.getTicketFeed ? '✅' : '❌'}`);
   console.log(`   Tag Operations:    ${results.tagOperations ? '✅' : '❌'}`);
 
   const passed = Object.values(results).filter(Boolean).length;
