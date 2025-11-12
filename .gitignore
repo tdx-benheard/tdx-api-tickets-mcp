@@ -6,6 +6,9 @@
 # Node modules
 node_modules/
 
+# Build output (generated files - run npm run build)
+dist/
+
 # IDE
 .vscode/
 .idea/

@@ -27,6 +27,14 @@ tdx_run_report({
 })
 ```
 
+**Report Selection Best Practices:**
+- **Prefer "All Open Tickets"** - When searching for open tickets, prefer reports named "All Open Tickets" over team-specific reports (e.g., "Team Name - Open Tickets")
+- **Handle ambiguity gracefully** - When multiple reports match:
+  1. Use the general/global report (e.g., "All Open Tickets") and return results
+  2. At the end of results, mention other matching reports that were found (include report names and IDs)
+  3. Inform user they can query those other reports if interested, but don't anticipate or wait for action
+- **Global reports first** - Prefer global reports over team/project-specific reports unless user specifies otherwise
+
 ## Environment Selection
 
 All tools support an optional `environment` parameter:

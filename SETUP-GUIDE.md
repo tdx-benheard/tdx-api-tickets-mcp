@@ -33,90 +33,28 @@ Claude will automatically:
 - Run `npm run build` to compile TypeScript
 - Verify the build succeeded
 
-### Step 1: Gather Configuration
+### Step 1: Run Interactive Setup Tool
 
-Claude will ask you questions with helpful examples:
-
-**Environment Selection:**
-```
-Which environment do you want to configure?
-Examples: 'prod', 'dev', 'canary'
-```
-
-**Domain Entry** (examples change based on environment):
-- **Production**: "Enter domain (example: 'solutions.teamdynamix.com' or 'yourcompany.teamdynamix.com')"
-- **Development**: "Enter domain (example: 'localhost/TDDev')"
-- **Canary**: "Enter domain (example: 'eng.teamdynamixcanary.com')"
-
-**Username:**
-```
-Enter your TeamDynamix username
-Example: 'john.doe@company.com'
-```
-
-**Password** - ⚠️ Security Warning:
-```
-⚠️ SECURITY NOTICE: You have two options for password entry:
-
-Option 1: Enter password in this chat (will be visible in chat history)
-  • Quick and easy
-  • Password will be encrypted immediately with DPAPI
-  • Only visible in your Claude Code chat history
-  • Type 'chat' to use this option
-
-Option 2: Use password encryption tool (RECOMMENDED - more secure)
-  • Your password never appears in chat
-  • Run: npm run encrypt-password
-  • Tool will prompt for password securely (masked as ***)
-  • Only encrypted value is output (starting with 'dpapi:')
-  • Paste the encrypted value here
-  • Type 'tool' to use this option
-
-Which option do you prefer? (chat/tool)
-```
+Claude will tell you to run the setup command in a separate terminal, providing the correct path for your system.
 
 **Security Notes**:
-- Passwords entered in chat are visible in your chat history
-- Once encrypted with DPAPI, passwords can only be decrypted by your Windows user account
+- Your password is entered in your terminal, not in chat
+- Password is masked during entry (appears as ***)
+- DPAPI encryption ties password to your Windows user account
+- Only you can decrypt the password on your machine
 - Encrypted passwords are stored in `~/.config/tdx-mcp/` (outside version control)
-- The encryption tool (`npm run encrypt-password`) never exposes your password - only the encrypted result
 
-**Alternative encryption tool** (if you prefer PowerShell):
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/encrypt-password.ps1
-```
+### Step 2: Paste Configuration to Claude
 
-### Step 2: Validate Credentials
+After the tool completes:
 
-Claude will:
-- Test authentication with TeamDynamix
-- Fetch your available ticketing applications
-- Show you a numbered list to choose from
+1. **Copy the output** (if not already in clipboard)
+2. **Paste it to Claude Code** (the entire `TDXCREDS:START...END` block)
+3. Claude will parse and validate the configuration
 
-**Example:**
-```
-Available ticketing applications:
-[1] IT Support (ID: 129)
-[2] HR Requests (ID: 245)
-[3] Facilities (ID: 312)
+### Step 3: Create Configuration Files
 
-Select apps (examples: '1', '1,2', 'all'):
-```
-
-If fetching apps fails, Claude falls back to:
-```
-Enter app IDs manually
-Examples: '129', '129,245'
-```
-
-### Step 3: Encrypt Your Password
-
-Claude uses Windows DPAPI to securely encrypt your password (if not already encrypted):
-- Tied to your Windows user account
-- Cannot be decrypted by other users
-- Stored as `dpapi:AQAAANCMnd8BFdERjHoAwE...`
-
-### Step 4: Create Configuration Files
+Claude automatically creates:
 
 **Credentials file** at `~/.config/tdx-mcp/{environment}-credentials.json`:
 ```json
@@ -128,25 +66,36 @@ Claude uses Windows DPAPI to securely encrypt your password (if not already encr
 }
 ```
 
-### Step 5: Configure MCP Server Location
+### Step 4: Install to Target Project
 
 Claude asks:
 ```
-Configure globally or for specific project?
-Examples: 'global', 'project'
+Which project should use this MCP server?
+Enter project directory path
+Example: 'C:\source\my-project'
 ```
 
-**Global Configuration:**
-Updates `~/.claude.json`:
+**What happens:**
+- Copies `.mcp.json` to your target project
+- **Converts relative path to absolute path** (critical step!)
+  - From: `"args": ["./dist/index.js"]`
+  - To: `"args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"]`
+
+⚠️ **Why absolute paths?** The target project needs to know where to find the MCP server. Relative paths only work within the MCP server's own directory.
+
+**Example `.mcp.json` created:**
 ```json
 {
   "mcpServers": {
     "tdx-api-tickets-mcp": {
       "type": "stdio",
       "command": "node",
-      "args": ["C:\\source\\MCP\\tdx-api-tickets-mcp\\dist\\index.js"],
+      "args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"],
       "env": {
-        "TDX_PROD_CREDENTIALS_FILE": "C:\\Users\\username\\.config\\tdx-mcp\\prod-credentials.json",
+        "TDX_PROD_CREDENTIALS_FILE": "~/.config/tdx-mcp/prod-credentials.json",
+        "TDX_TEST_CREDENTIALS_FILE": "~/.config/tdx-mcp/test-credentials.json",
+        "TDX_CANARY_CREDENTIALS_FILE": "~/.config/tdx-mcp/canary-credentials.json",
+        "TDX_DEV_CREDENTIALS_FILE": "~/.config/tdx-mcp/dev-credentials.json",
         "TDX_DEFAULT_ENVIRONMENT": "prod"
       }
     }
@@ -154,16 +103,7 @@ Updates `~/.claude.json`:
 }
 ```
 
-**Project-Specific Configuration:**
-Asks for project path:
-```
-Enter project directory path
-Example: 'C:\source\my-project'
-```
-
-Creates/updates `.mcp.json` and `.claude/settings.local.json` in that project.
-
-### Step 6: Final Instructions
+### Step 5: Final Instructions
 
 Claude tells you:
 - Where files were created
@@ -252,7 +192,7 @@ When updating:
 
 ### Claude doesn't see the MCP server
 - Verify credentials file exists at `~/.config/tdx-mcp/{env}-credentials.json`
-- Check `.mcp.json` (project) or `~/.claude.json` (global) exists
+- Check `.mcp.json` exists in your project root
 - Restart Claude Code completely (quit and reopen)
 - Check Claude Code's output panel for errors
 
@@ -266,7 +206,7 @@ When updating:
 
 After setup completes, you'll have:
 
-### **1. Credentials** (Global - Shared Across Projects)
+### **1. Credentials** (Shared Across All Projects)
 - **Location**: `~/.config/tdx-mcp/{environment}-credentials.json`
 - **Contains**: URL, username, encrypted password, app IDs
 - **Shared**: These credentials can be used by multiple projects
@@ -286,10 +226,6 @@ After setup completes, you'll have:
 **Option B: Global** (`~/.claude.json`)
 - **Available everywhere**: MCP server works in all Claude Code projects
 - **Single configuration**: One place to manage the server
-
-### **3. Claude Settings** (if project-specific)
-- **Location**: `.claude/settings.local.json`
-- **Contains**: `"enableAllProjectMcpServers": true`
 
 ---
 

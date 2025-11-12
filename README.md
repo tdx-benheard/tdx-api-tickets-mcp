@@ -35,14 +35,7 @@ Once installed, ask Claude: *"Show me all open tickets assigned to John Doe"* or
    In Claude Code, simply ask:
    > "Set up the TeamDynamix MCP server for me"
 
-   Claude will automatically:
-   - Install dependencies and build the project
-   - Ask for your environment (prod/dev/canary) and TeamDynamix domain
-   - Ask for username and password
-   - Test authentication and fetch available ticketing apps
-   - Encrypt your password with DPAPI
-   - Create all configuration files
-   - Set up global or project-specific configuration
+   Claude will guide you through the entire setup process interactively.
 
    See **[SETUP-GUIDE.md](./SETUP-GUIDE.md)** for detailed instructions.
 
@@ -58,7 +51,7 @@ Once installed, ask Claude: *"Show me all open tickets assigned to John Doe"* or
 - Credentials stored in `~/.config/tdx-mcp/` (outside project directory)
 - DPAPI ties encryption to your Windows user account - others cannot decrypt
 - Password format: `"TDX_PASSWORD": "dpapi:AQAAANCMnd8BFdERjHoAwE..."`
-- **Encryption tool**: Run `npm run encrypt-password` for secure password entry (never visible in chat)
+- **Setup tool**: Run `npm run setup-env-config` for interactive, secure credential setup (password never appears in chat)
 
 ---
 
@@ -89,17 +82,23 @@ See **[SETUP-GUIDE.md](./SETUP-GUIDE.md#updating-configuration)** for detailed u
 
 Your MCP server configuration is **portable and reusable**:
 
-- **Credentials are global**: Stored in `~/.config/tdx-mcp/`, shared across all projects
-- **`.mcp.json` is portable**: Copy it to any project where you want the MCP server
-- **Easy to make global**: Move config to `~/.claude.json` to enable everywhere
+- **Credentials are shared**: Stored in `~/.config/tdx-mcp/`, used by all projects
+- **`.mcp.json` is project-specific**: Each project has its own copy
+- **Easy to add to new projects**: Copy `.mcp.json` and update the absolute path
 
 **To add to another project:**
-1. Copy `.mcp.json` to the new project
-2. Update the `args` path to absolute path: `"args": ["C:/full/path/to/dist/index.js"]`
-3. Restart Claude Code
 
-**To make globally available:**
-> Ask Claude: "Make my TeamDynamix MCP server globally available"
+⚠️ **Important:** The path must be updated when copying!
+
+1. Copy `.mcp.json` to the new project root
+2. **Update the `args` path from relative to absolute:**
+   - **Before:** `"args": ["./dist/index.js"]` ❌ (won't work)
+   - **After:** `"args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"]` ✅
+3. Restart Claude Code in that project
+
+Or simply ask Claude: *"Install the TeamDynamix MCP server to my project"*
+
+(Claude will automatically update the path to absolute for you)
 
 See **[SETUP-GUIDE.md](./SETUP-GUIDE.md#using-in-multiple-projects)** for more details.
 

@@ -68,15 +68,15 @@ if (prodCredsFile && existsSync(expandHome(prodCredsFile))) {
   }
 }
 
-// Try to load development credentials
-const devCredsFile = process.env.TDX_DEV_CREDENTIALS_FILE;
-if (devCredsFile && existsSync(expandHome(devCredsFile))) {
+// Try to load test credentials
+const testCredsFile = process.env.TDX_TEST_CREDENTIALS_FILE;
+if (testCredsFile && existsSync(expandHome(testCredsFile))) {
   try {
-    const devCreds = loadCredentialsFile(expandHome(devCredsFile));
-    environments.set('dev', parseEnvironmentConfig(devCreds));
-    console.error('Loaded development environment configuration');
+    const testCreds = loadCredentialsFile(expandHome(testCredsFile));
+    environments.set('test', parseEnvironmentConfig(testCreds));
+    console.error('Loaded test environment configuration');
   } catch (error) {
-    console.error('Failed to load development credentials:', error);
+    console.error('Failed to load test credentials:', error);
   }
 }
 
@@ -92,10 +92,22 @@ if (canaryCredsFile && existsSync(expandHome(canaryCredsFile))) {
   }
 }
 
+// Try to load development credentials
+const devCredsFile = process.env.TDX_DEV_CREDENTIALS_FILE;
+if (devCredsFile && existsSync(expandHome(devCredsFile))) {
+  try {
+    const devCreds = loadCredentialsFile(expandHome(devCredsFile));
+    environments.set('dev', parseEnvironmentConfig(devCreds));
+    console.error('Loaded development environment configuration');
+  } catch (error) {
+    console.error('Failed to load development credentials:', error);
+  }
+}
+
 // Ensure at least one environment is configured
 if (environments.size === 0) {
   console.error('No environment configurations found!');
-  console.error('Set TDX_PROD_CREDENTIALS_FILE, TDX_DEV_CREDENTIALS_FILE, and/or TDX_CANARY_CREDENTIALS_FILE environment variables');
+  console.error('Set TDX_PROD_CREDENTIALS_FILE, TDX_TEST_CREDENTIALS_FILE, TDX_CANARY_CREDENTIALS_FILE, and/or TDX_DEV_CREDENTIALS_FILE environment variables');
   process.exit(1);
 }
 

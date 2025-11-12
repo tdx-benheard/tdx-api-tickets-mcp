@@ -6,14 +6,15 @@
 
 **Active Environments:**
 - **Production**: `https://solutions.teamdynamix.com/TDWebApi` (App ID: 129)
-- **Development**: `http://localhost/TDDev/TDWebApi` (App ID: 627)
+- **Test**: `https://part01-demo.teamdynamixtest.com/TDWebApi` (App ID: TBD)
 - **Canary**: `https://eng.teamdynamixcanary.com/TDWebApi` (App ID: TBD)
+- **Development**: `http://localhost/TDDev/TDWebApi` (App ID: 627)
 
 **Credential Directory:** `~/.config/tdx-mcp/` (Windows: `C:\Users\username\.config\tdx-mcp\`)
 
 ## Configuration
 
-**Setup**: When the user asks to setup or configure the MCP server, follow the **MCP Server Setup Workflow** below.
+**Setup**: When the user asks to setup or configure the MCP server (e.g., "setup", "Set up the TeamDynamix MCP server", "configure this MCP server"), follow the **MCP Server Setup Workflow** below.
 
 **Documentation:**
 - **[SETUP-GUIDE.md](./SETUP-GUIDE.md)** - User-facing setup guide (what to expect)
@@ -55,227 +56,127 @@ When the user requests setup (e.g., "Set up the TeamDynamix MCP server"), follow
    test -f dist/index.js && echo "✓ Build successful" || echo "✗ Build failed"
    ```
 
-### Step 1: Gather Configuration
+### Step 1: Run Interactive Setup Tool
 
-Ask the user these questions with examples:
+**IMPORTANT**: The setup tool MUST be run in a separate terminal to properly mask password entry. DO NOT attempt to run it via Claude's Bash tool - it will fail because password input requires an interactive terminal.
 
-**1. Environment**:
-```
-Which environment do you want to configure?
-Examples: 'prod', 'dev', 'canary'
-```
-
-**2. Domain** (examples based on environment):
-- If **prod**: `Enter your TeamDynamix domain (example: 'solutions.teamdynamix.com' or 'yourcompany.teamdynamix.com')`
-- If **dev**: `Enter your TeamDynamix domain (example: 'localhost/TDDev')`
-- If **canary**: `Enter your TeamDynamix domain (example: 'eng.teamdynamixcanary.com')`
-
-Construct the full URL from domain:
-- **prod**: `https://{domain}/TDWebApi`
-- **dev**: `http://{domain}/TDWebApi` (note: http for localhost)
-- **canary**: `https://{domain}/TDWebApi`
-
-**3. Username**:
-```
-Enter your TeamDynamix username (example: 'john.doe@company.com')
-```
-
-**4. Password** - **SECURITY WARNING REQUIRED**:
-```
-⚠️ SECURITY NOTICE: You have two options for password entry:
-
-Option 1: Enter password in this chat (will be visible in chat history)
-  • Quick and easy
-  • Password will be encrypted immediately with DPAPI
-  • Only visible in your Claude Code chat history
-  • Type 'chat' to use this option
-
-Option 2: Use password encryption tool (RECOMMENDED - more secure)
-  • Your password never appears in chat
-  • Run: npm run encrypt-password
-  • Tool will prompt for password securely (masked as ***)
-  • Only encrypted value is output (starting with 'dpapi:')
-  • Paste the encrypted value here
-  • Type 'tool' to use this option
-
-Which option do you prefer? (chat/tool)
-```
-
-**If user chooses 'chat'**:
-- Ask: `Enter your TeamDynamix password (will be encrypted immediately):`
-- Immediately encrypt it using PowerShell DPAPI command
-- Do NOT echo the password back
-
-**If user chooses 'tool'**:
-- Tell them to run: `npm run encrypt-password`
-- User enters password in their terminal (masked)
-- Ask: `Paste the encrypted password (starting with 'dpapi:'):`
-- Validate it starts with 'dpapi:'
-
-**Alternative tool** (if npm not available):
-- PowerShell: `powershell -ExecutionPolicy Bypass -File scripts/encrypt-password.ps1`
-
-### Step 2: Validate Credentials
-
-**IMPORTANT**: Always test authentication before saving anything.
-
-1. **If user provided plaintext password**, encrypt it first:
-   ```powershell
-   powershell -Command "Add-Type -AssemblyName System.Security; $plain = 'PLAINTEXT_PASSWORD_HERE'; $encrypted = [Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes($plain), $null, 'CurrentUser'); 'dpapi:' + [Convert]::ToBase64String($encrypted)"
-   ```
-
-2. **Decrypt password for testing** (only if encrypted):
-   ```powershell
-   powershell -Command "Add-Type -AssemblyName System.Security; $encrypted = 'BASE64_PART_HERE'; $decrypted = [Security.Cryptography.ProtectedData]::Unprotect([Convert]::FromBase64String($encrypted), $null, 'CurrentUser'); [Text.Encoding]::UTF8.GetString($decrypted)"
-   ```
-
-3. **Test authentication**:
+1. **Get current working directory** to construct the command with full path:
    ```bash
-   npx tsx -e "
-   import axios from 'axios';
-   const baseUrl = 'BASE_URL_HERE';
-   const username = 'USERNAME_HERE';
-   const password = 'DECRYPTED_PASSWORD_HERE';
-   axios.post(\`\${baseUrl}/api/auth\`, { UserName: username, Password: password }, { timeout: 10000 })
-     .then(r => console.log('✓ Authentication successful'))
-     .catch(e => {
-       if (e.code === 'ECONNABORTED') console.error('✗ Timeout: Cannot reach server');
-       else if (e.response?.status === 401) console.error('✗ Invalid username or password');
-       else console.error('✗ Authentication failed:', e.message);
-       process.exit(1);
-     });
-   "
-   ```
-   - If fails, report error and ask user to verify credentials
-   - Do NOT proceed if authentication fails
-
-### Step 3: Fetch Available Applications
-
-1. **Get authentication token** (from Step 2, or re-authenticate)
-
-2. **Fetch applications**:
-   ```bash
-   npx tsx -e "
-   import axios from 'axios';
-   const baseUrl = 'BASE_URL_HERE';
-   const token = 'TOKEN_HERE';
-   axios.get(\`\${baseUrl}/api/applications\`, {
-     headers: { Authorization: \`Bearer \${token}\`, 'Content-Type': 'application/json' },
-     timeout: 10000
-   })
-     .then(r => {
-       const apps = r.data.filter(a => a.Type === 'Ticketing' && a.Active);
-       console.log(JSON.stringify(apps));
-     })
-     .catch(e => {
-       console.error('✗ Failed to fetch applications:', e.message);
-       process.exit(1);
-     });
-   "
+   pwd
    ```
 
-3. **Display apps to user**:
+2. **Tell user to run the setup tool in a separate terminal window**:
    ```
-   Available ticketing applications:
-   [1] IT Support (ID: 129)
-   [2] HR Requests (ID: 245)
-   [3] Facilities (ID: 312)
+   Copy and paste the following into a SEPARATE terminal window to generate credentials for the Ticket API MCP server (or type "skip"):
 
-   Select applications (examples: '1', '1,2', 'all'):
-   ```
+   ---------------------------------------
+   cd {PATH_FROM_PWD}
+   npm run setup-env-config
+   ---------------------------------------
 
-4. **Parse user selection**:
-   - 'all' → use all app IDs
-   - '1,2,3' → parse numbers, get corresponding app IDs
-   - Validate selections are valid indices
-
-5. **Fallback if fetch fails**:
-   ```
-   Unable to fetch applications automatically.
-   Enter application IDs manually (comma-separated, example: '129,245'):
+   Once complete, copy and paste the entire output (including TDXCREDS:START and TDXCREDS:END) back to me.
    ```
 
-### Step 4: Create Credentials File
+   **Note**: Replace `{PATH_FROM_PWD}` with the actual path returned from `pwd` in Step 1.
 
-1. **Determine paths**:
-   ```bash
-   # Windows
-   CONFIG_DIR="$HOME/.config/tdx-mcp"
-   CREDS_FILE="$CONFIG_DIR/${environment}-credentials.json"
-   ```
+   **If user tries to run via Claude**: Politely remind them that the setup tool cannot be run through Claude's Bash tool and they must use a separate terminal window for password security.
 
-2. **Create directory if needed**:
-   ```bash
-   mkdir -p "$HOME/.config/tdx-mcp"
-   ```
+### Step 2: Parse Setup Tool Output
 
-3. **Create credentials JSON**:
-   ```json
-   {
-     "TDX_BASE_URL": "https://solutions.teamdynamix.com/TDWebApi",
-     "TDX_USERNAME": "username",
-     "TDX_PASSWORD": "dpapi:AQAAANCMnd8BFdERjHoAwE...",
-     "TDX_TICKET_APP_IDS": "129,245"
+When user pastes the `TDXCREDS:START...END` output (or user types 'skip' to skip to Step 4):
+
+1. **Validate format**:
+   - Must contain `TDXCREDS:START` and `TDXCREDS:END`
+   - Must have all required fields: `environment`, `baseUrl`, `username`, `password`, `appIds`
+
+2. **Parse the output**:
+   ```typescript
+   const match = output.match(/TDXCREDS:START\s*([\s\S]*?)\s*TDXCREDS:END/);
+   if (!match) {
+     console.error('✗ Invalid format: Missing TDXCREDS markers');
+     return;
+   }
+
+   const lines = match[1].trim().split('\n');
+   const config: Record<string, string> = {};
+   for (const line of lines) {
+     const [key, ...valueParts] = line.split('=');
+     config[key.trim()] = valueParts.join('=').trim();
+   }
+
+   // Validate required fields
+   const required = ['environment', 'baseUrl', 'username', 'password', 'appIds'];
+   for (const field of required) {
+     if (!config[field]) {
+       console.error(`✗ Missing required field: ${field}`);
+       return;
+     }
    }
    ```
 
-4. **Write file** using Write tool
+3. **Validate password format**:
+   - Must start with `dpapi:`
+   - If not, reject and ask user to run setup tool again
 
-5. **Verify file created**:
+### Step 3: Create Credentials File
+
+Using the parsed configuration from Step 2:
+
+1. **Determine credential file path**:
+   ```bash
+   # Windows: C:\Users\username\.config\tdx-mcp\{environment}-credentials.json
+   # Example: C:\Users\john\.config\tdx-mcp\prod-credentials.json
+   ```
+
+2. **Check if credentials already exist**:
+   ```bash
+   test -f "$HOME/.config/tdx-mcp/${environment}-credentials.json" && echo "✓ File exists" || echo "✗ File does not exist"
+   ```
+
+   If file exists, ask user:
+   ```
+   Credentials for '{environment}' already exist. Do you want to overwrite them with the new credentials?
+   ```
+
+   If user declines, skip to Step 4. If user accepts or file doesn't exist, continue.
+
+3. **Create directory if needed**:
+   ```bash
+   powershell -Command "New-Item -ItemType Directory -Force -Path \"$HOME\.config\tdx-mcp\""
+   ```
+
+   **Note**: Use `$HOME` not `$env:USERPROFILE` to avoid path format errors.
+
+4. **Create credentials JSON** using parsed values:
+   ```json
+   {
+     "TDX_BASE_URL": "{baseUrl from parsed config}",
+     "TDX_USERNAME": "{username from parsed config}",
+     "TDX_PASSWORD": "{password from parsed config}",
+     "TDX_TICKET_APP_IDS": "{appIds from parsed config}"
+   }
+   ```
+
+5. **Write file** using Write tool to `~/.config/tdx-mcp/{environment}-credentials.json`
+
+6. **Verify file created**:
    ```bash
    test -f "$HOME/.config/tdx-mcp/${environment}-credentials.json" && echo "✓ Credentials saved"
    ```
 
-### Step 5: Configure MCP Server Location
+### Step 4: Install MCP Server to Target Project
 
-Ask user:
-```
-Where should the MCP server be available?
+**IMPORTANT**: This MCP server is installed **per-project**, not globally. Each project that wants to use it gets its own `.mcp.json` file.
 
-[1] Global - Available in all Claude Code projects
-[2] Project - Available only in a specific project
+⚠️ **Path Requirements:**
+- This repo's `.mcp.json` uses **relative path**: `"./dist/index.js"` (works only in this repo)
+- When copied to other projects, **MUST change to absolute path**: `"C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"`
+- Otherwise the other project won't know where to find the MCP server
+- Claude automatically converts relative to absolute during setup
 
-Examples: '1' for global, '2' for project
-```
-
-**If user chooses Global (1)**:
-
-1. **Get paths**:
-   ```bash
-   CLAUDE_JSON="$HOME/.claude.json"
-   MCP_SERVER_PATH=$(pwd)
-   CREDS_PATH="$HOME/.config/tdx-mcp/${environment}-credentials.json"
+1. **Ask for target project path**:
    ```
-
-2. **Read existing config** (if exists):
-   ```bash
-   test -f "$HOME/.claude.json" && cat "$HOME/.claude.json"
-   ```
-
-3. **Merge or create config**:
-   ```json
-   {
-     "mcpServers": {
-       "tdx-api-tickets-mcp": {
-         "type": "stdio",
-         "command": "node",
-         "args": ["/absolute/path/to/tdx-api-tickets-mcp/dist/index.js"],
-         "env": {
-           "TDX_PROD_CREDENTIALS_FILE": "/absolute/path/.config/tdx-mcp/prod-credentials.json",
-           "TDX_DEFAULT_ENVIRONMENT": "prod"
-         }
-       }
-     }
-   }
-   ```
-   **IMPORTANT**: Use absolute paths (result of `pwd`) not relative paths!
-
-4. **Write config** using Write tool
-
-**If user chooses Project (2)**:
-
-1. **Ask for project path**:
-   ```
+   Which project should use this MCP server?
    Enter the project directory path (example: 'C:\source\my-project'):
    ```
 
@@ -283,7 +184,9 @@ Examples: '1' for global, '2' for project
    ```bash
    test -d "PROJECT_PATH" && echo "✓ Directory exists" || echo "✗ Directory not found"
    ```
-   - If not found, ask again
+   - If not found, ask user: "Would you like me to create this directory? (yes/no)"
+   - If yes, create directory: `mkdir -p "PROJECT_PATH"`
+   - If no, ask for path again
 
 3. **Check not configuring self**:
    ```bash
@@ -291,36 +194,61 @@ Examples: '1' for global, '2' for project
    PROJECT_ABS=$(cd "PROJECT_PATH" && pwd)
    MCP_ABS=$(pwd)
    if [ "$PROJECT_ABS" = "$MCP_ABS" ]; then
-     echo "✗ Cannot configure MCP server project to use itself"
-     # Suggest using global config instead
+     echo "✗ Cannot install MCP server into itself"
+     echo "   The MCP server project doesn't need to reference itself"
+     echo "   Please specify a different project that will USE this MCP server"
+     # Ask for path again
    fi
    ```
 
-4. **Create `.mcp.json`** in project directory:
-   - Check if exists, merge if valid JSON
-   - Use absolute path to dist/index.js
-   - Use absolute path to credentials file
+4. **Get absolute path to MCP server**:
+   ```bash
+   MCP_SERVER_PATH=$(cd C:\source\MCP\tdx-api-tickets-mcp && pwd)
+   ```
 
-5. **Create `.claude/settings.local.json`**:
+5. **Copy `.mcp.json` template to target project**:
+   - Read the `.mcp.json` from this repo
+   - Update the `args` path to absolute path: `${MCP_SERVER_PATH}/dist/index.js`
+   - Write to `${PROJECT_PATH}/.mcp.json`
+
+   Example `.mcp.json` content:
    ```json
    {
-     "enableAllProjectMcpServers": true
+     "mcpServers": {
+       "tdx-api-tickets-mcp": {
+         "type": "stdio",
+         "command": "node",
+         "args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"],
+         "env": {
+           "TDX_PROD_CREDENTIALS_FILE": "~/.config/tdx-mcp/prod-credentials.json",
+           "TDX_TEST_CREDENTIALS_FILE": "~/.config/tdx-mcp/test-credentials.json",
+           "TDX_CANARY_CREDENTIALS_FILE": "~/.config/tdx-mcp/canary-credentials.json",
+           "TDX_DEV_CREDENTIALS_FILE": "~/.config/tdx-mcp/dev-credentials.json",
+           "TDX_DEFAULT_ENVIRONMENT": "prod"
+         }
+       }
+     }
    }
    ```
 
-### Step 6: Completion
+### Step 5: Completion
 
 Report to user:
 ```
 ✓ Setup complete!
 
 Files created:
-  • Credentials: ~/.config/tdx-mcp/prod-credentials.json
-  • MCP config: ~/.claude.json (or project/.mcp.json)
+  • Credentials: ~/.config/tdx-mcp/{environment}-credentials.json (if configured)
+  • MCP config: {PROJECT_PATH}/.mcp.json
+
+The MCP server is now available in the target project.
 
 Next steps:
-  1. Restart Claude Code (quit and reopen)
+  1. Open the target project in Claude Code (or restart if already open)
   2. Test by asking: "List available TeamDynamix reports"
+
+Note: Credentials in ~/.config/tdx-mcp/ are shared across all projects.
+      Each project has its own .mcp.json pointing to these credentials.
 ```
 
 ---
@@ -334,10 +262,9 @@ If user asks to update/modify existing setup OR show current configuration:
    ls "$HOME/.config/tdx-mcp/"
    ```
 
-2. **Check for local MCP configuration**:
+2. **Check for project MCP configuration**:
    ```bash
-   test -f .mcp.json && echo "✓ Local .mcp.json exists (project-specific)" || echo "✗ No local .mcp.json"
-   test -f "$HOME/.claude.json" && echo "✓ Global .claude.json may exist" || echo "✗ No global config"
+   test -f .mcp.json && echo "✓ Project .mcp.json exists" || echo "✗ No .mcp.json in current project"
    ```
 
 3. **Show current credentials**:
@@ -349,21 +276,21 @@ If user asks to update/modify existing setup OR show current configuration:
    ```
    Your Current Configuration:
 
-   Credentials (global - shared across projects):
+   Credentials (shared across all projects):
      • Production: username@domain.com → App 129 → solutions.teamdynamix.com
-     • Development: username → App 627 → localhost/TDDev
+     • Test: username → App 138 → part01-demo.teamdynamixtest.com
      • Canary: username → App 627 → eng.teamdynamixcanary.com
+     • Development: username → App 627 → localhost/TDDev
 
    MCP Server Configuration:
-     ✓ Project-specific (.mcp.json exists in this project)
-       - Ready to copy to other projects
-       - Update 'args' path to absolute when copying
-       - Or make global by moving to ~/.claude.json
+     ✓ Project has .mcp.json
+       - MCP server configured for this project
+       - Can copy .mcp.json to other projects (update 'args' path to absolute)
 
    Next Steps:
+     • Update credentials (username/password/apps)
+     • Add new environment
      • Copy .mcp.json to another project
-     • Make globally available in all projects
-     • Keep project-specific
    ```
 
 5. **Ask what to update** (if user wants to modify):
@@ -371,17 +298,15 @@ If user asks to update/modify existing setup OR show current configuration:
    What would you like to do?
    [1] Change credentials (username/password)
    [2] Modify application selection
-   [3] Add new environment (dev/canary)
+   [3] Add new environment (test/canary/dev)
    [4] Copy .mcp.json to another project
-   [5] Make MCP server globally available
 
-   Select option (1-5):
+   Select option (1-4):
    ```
 
 6. **Apply updates** based on selection:
    - Options 1-3: Update credential files
-   - Option 4: Help copy `.mcp.json` to another project (update paths)
-   - Option 5: Move config to `~/.claude.json`
+   - Option 4: Help copy `.mcp.json` to another project (update 'args' path to absolute)
 
 ---
 
@@ -416,7 +341,7 @@ If user asks to update/modify existing setup OR show current configuration:
   • Server is online
 ```
 
-**Credential files** (`~/.config/tdx-mcp/prod-credentials.json`, `dev-credentials.json`, `canary-credentials.json`):
+**Credential files** (`~/.config/tdx-mcp/prod-credentials.json`, `test-credentials.json`, `canary-credentials.json`, `dev-credentials.json`):
 ```json
 {
   "TDX_BASE_URL": "https://solutions.teamdynamix.com/TDWebApi",
@@ -432,21 +357,24 @@ If user asks to update/modify existing setup OR show current configuration:
 
 **Environment variables**:
 - `TDX_PROD_CREDENTIALS_FILE`: Path to prod credentials
-- `TDX_DEV_CREDENTIALS_FILE`: Path to dev credentials
+- `TDX_TEST_CREDENTIALS_FILE`: Path to test credentials
 - `TDX_CANARY_CREDENTIALS_FILE`: Path to canary credentials
-- `TDX_DEFAULT_ENVIRONMENT`: "prod", "dev", or "canary" (default: "prod")
+- `TDX_DEV_CREDENTIALS_FILE`: Path to dev credentials
+- `TDX_DEFAULT_ENVIRONMENT`: "prod", "test", "canary", or "dev" (default: "prod")
 
-**Using environments**: All tools accept optional `environment` parameter ("prod"/"dev"/"canary")
+**Using environments**: All tools accept optional `environment` parameter ("prod"/"test"/"canary"/"dev")
 ```javascript
 tdx_get_ticket({ ticketId: 12345 })  // uses default (prod)
-tdx_get_ticket({ ticketId: 555058, environment: "dev" })
+tdx_get_ticket({ ticketId: 456, environment: "test" })
 tdx_get_ticket({ ticketId: 789, environment: "canary" })
+tdx_get_ticket({ ticketId: 555058, environment: "dev" })
 ```
 
 ## Testing
-- Development: `npm run test:api`
 - Production: `npm run test:prod`
+- Test: `npm run test:test`
 - Canary: `npm run test:canary`
+- Development: `npm run test:api`
 
 ## Key API Behaviors
 
@@ -459,6 +387,9 @@ tdx_get_ticket({ ticketId: 789, environment: "canary" })
 **Reports**:
 - `withData=true` returns ALL rows (no MaxResults limit). 90s SQL timeout only limit.
 - API does NOT expose report filter criteria/WHERE clauses. Only returns: columns, sort order, max results, metadata.
+- **Report Selection Priority**: When multiple reports match, prefer "All Open Tickets" over team-specific reports (e.g., "Team Name - Open Tickets").
+- **Handle ambiguity gracefully**: When multiple reports match: (1) Use the general/global report and return results, (2) At the end of results, mention other matching reports found (include names and IDs), (3) Inform user they can query those if interested, but don't anticipate or wait for action.
+- **Global vs Team Reports**: Prefer global reports unless user specifies a team/project context.
 
 **App ID Discovery**: Server tries each configured app ID until ticket found, then caches result.
 
