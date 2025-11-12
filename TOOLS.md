@@ -1,6 +1,6 @@
 # TeamDynamix MCP Tools Reference
 
-This document provides detailed information about all available MCP tools for Claude Code/Claude Desktop.
+This document provides detailed information about all available MCP tools for Claude Code.
 
 ## Best Practices
 

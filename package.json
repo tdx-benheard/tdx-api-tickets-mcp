@@ -8,7 +8,6 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "setup": "tsx src/setup-credentials.ts",
     "test:api": "tsx src/test.ts",
     "test:prod": "tsx src/test-prod.ts",
     "test:canary": "tsx src/test-canary.ts",

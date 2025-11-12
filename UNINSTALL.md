@@ -116,7 +116,7 @@ Credentials are stored separately from the MCP server configuration:
 If you might want to use the MCP server again:
 1. **Keep the credentials** - Just remove the MCP server configuration
 2. **Keep the project directory** - Just remove from Claude Code config
-3. **To reinstall**: Run `npm run setup` again and it will reuse existing credentials
+3. **To reinstall**: Ask Claude to set up the MCP server again, and it can reuse existing credentials
 
 ---
 
