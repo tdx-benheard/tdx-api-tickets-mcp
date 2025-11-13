@@ -387,6 +387,18 @@ export class TDXClient {
     const response = await this.client.post('/api/reports/search', searchBody);
     let reports = response.data;
 
+    // Prioritize reports starting with "All" to the top
+    if (Array.isArray(reports) && reports.length > 1) {
+      reports = reports.sort((a, b) => {
+        const aStartsWithAll = /^All\s/i.test(a.Name || '');
+        const bStartsWithAll = /^All\s/i.test(b.Name || '');
+
+        if (aStartsWithAll && !bStartsWithAll) return -1;
+        if (!aStartsWithAll && bStartsWithAll) return 1;
+        return 0; // Maintain API order for other reports
+      });
+    }
+
     // Client-side limit to maxResults
     if (Array.isArray(reports) && maxResults > 0) {
       reports = reports.slice(0, maxResults);

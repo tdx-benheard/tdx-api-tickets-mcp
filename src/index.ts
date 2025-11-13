@@ -13,8 +13,19 @@ import { decodePassword } from './utils.js';
 import type { EnvironmentConfig } from './types.js';
 
 // Expand ~ to home directory
+// Also normalize path separators for Windows
 function expandHome(path: string): string {
-  return path?.startsWith('~') ? path.replace('~', homedir()) : path;
+  if (!path) return path;
+
+  // Replace ~ with home directory
+  let expanded = path.startsWith('~') ? path.replace('~', homedir()) : path;
+
+  // Normalize path separators (forward slashes to backslashes on Windows)
+  if (process.platform === 'win32') {
+    expanded = expanded.replace(/\//g, '\\');
+  }
+
+  return expanded;
 }
 
 // Function to load JSON credentials file
@@ -58,69 +69,100 @@ const environments = new Map<string, EnvironmentConfig>();
 
 // Try to load production credentials
 const prodCredsFile = process.env.TDX_PROD_CREDENTIALS_FILE;
-if (prodCredsFile && existsSync(expandHome(prodCredsFile))) {
-  try {
-    const prodCreds = loadCredentialsFile(expandHome(prodCredsFile));
-    environments.set('prod', parseEnvironmentConfig(prodCreds));
-    console.error('Loaded production environment configuration');
-  } catch (error) {
-    console.error('Failed to load production credentials:', error);
+if (prodCredsFile) {
+  const expandedPath = expandHome(prodCredsFile);
+  if (existsSync(expandedPath)) {
+    try {
+      const prodCreds = loadCredentialsFile(expandedPath);
+      environments.set('prod', parseEnvironmentConfig(prodCreds));
+      console.error('✓ Loaded production environment configuration');
+    } catch (error) {
+      console.error('✗ Failed to load production credentials:', error instanceof Error ? error.message : error);
+    }
+  } else {
+    console.error(`✗ Production credentials file not found: ${expandedPath}`);
   }
 }
 
 // Try to load test credentials
 const testCredsFile = process.env.TDX_TEST_CREDENTIALS_FILE;
-if (testCredsFile && existsSync(expandHome(testCredsFile))) {
-  try {
-    const testCreds = loadCredentialsFile(expandHome(testCredsFile));
-    environments.set('test', parseEnvironmentConfig(testCreds));
-    console.error('Loaded test environment configuration');
-  } catch (error) {
-    console.error('Failed to load test credentials:', error);
+if (testCredsFile) {
+  const expandedPath = expandHome(testCredsFile);
+  if (existsSync(expandedPath)) {
+    try {
+      const testCreds = loadCredentialsFile(expandedPath);
+      environments.set('test', parseEnvironmentConfig(testCreds));
+      console.error('✓ Loaded test environment configuration');
+    } catch (error) {
+      console.error('✗ Failed to load test credentials:', error instanceof Error ? error.message : error);
+    }
+  } else {
+    console.error(`✗ Test credentials file not found: ${expandedPath}`);
   }
 }
 
 // Try to load canary credentials
 const canaryCredsFile = process.env.TDX_CANARY_CREDENTIALS_FILE;
-if (canaryCredsFile && existsSync(expandHome(canaryCredsFile))) {
-  try {
-    const canaryCreds = loadCredentialsFile(expandHome(canaryCredsFile));
-    environments.set('canary', parseEnvironmentConfig(canaryCreds));
-    console.error('Loaded canary environment configuration');
-  } catch (error) {
-    console.error('Failed to load canary credentials:', error);
+if (canaryCredsFile) {
+  const expandedPath = expandHome(canaryCredsFile);
+  if (existsSync(expandedPath)) {
+    try {
+      const canaryCreds = loadCredentialsFile(expandedPath);
+      environments.set('canary', parseEnvironmentConfig(canaryCreds));
+      console.error('✓ Loaded canary environment configuration');
+    } catch (error) {
+      console.error('✗ Failed to load canary credentials:', error instanceof Error ? error.message : error);
+    }
+  } else {
+    console.error(`✗ Canary credentials file not found: ${expandedPath}`);
   }
 }
 
 // Try to load development credentials
 const devCredsFile = process.env.TDX_DEV_CREDENTIALS_FILE;
-if (devCredsFile && existsSync(expandHome(devCredsFile))) {
-  try {
-    const devCreds = loadCredentialsFile(expandHome(devCredsFile));
-    environments.set('dev', parseEnvironmentConfig(devCreds));
-    console.error('Loaded development environment configuration');
-  } catch (error) {
-    console.error('Failed to load development credentials:', error);
+if (devCredsFile) {
+  const expandedPath = expandHome(devCredsFile);
+  if (existsSync(expandedPath)) {
+    try {
+      const devCreds = loadCredentialsFile(expandedPath);
+      environments.set('dev', parseEnvironmentConfig(devCreds));
+      console.error('✓ Loaded development environment configuration');
+    } catch (error) {
+      console.error('✗ Failed to load development credentials:', error instanceof Error ? error.message : error);
+    }
+  } else {
+    console.error(`✗ Development credentials file not found: ${expandedPath}`);
   }
 }
 
-// Ensure at least one environment is configured
+// Warn if no environments are configured, but don't exit
 if (environments.size === 0) {
-  console.error('No environment configurations found!');
+  console.error('WARNING: No environment configurations found!');
+  console.error('The MCP server will start, but tools will fail until credentials are configured.');
   console.error('Set TDX_PROD_CREDENTIALS_FILE, TDX_TEST_CREDENTIALS_FILE, TDX_CANARY_CREDENTIALS_FILE, and/or TDX_DEV_CREDENTIALS_FILE environment variables');
-  process.exit(1);
 }
 
 // Get default environment from config (defaults to 'prod')
-const defaultEnvironment = process.env.TDX_DEFAULT_ENVIRONMENT || 'prod';
+let defaultEnvironment = process.env.TDX_DEFAULT_ENVIRONMENT || 'prod';
+
+// If the specified default environment is not available, use the first available one
 if (!environments.has(defaultEnvironment)) {
-  console.error(`Default environment '${defaultEnvironment}' not found in configurations`);
-  console.error(`Available environments: ${Array.from(environments.keys()).join(', ')}`);
-  process.exit(1);
+  if (environments.size > 0) {
+    const firstEnv = Array.from(environments.keys())[0];
+    console.error(`WARNING: Default environment '${defaultEnvironment}' not found in configurations`);
+    console.error(`Available environments: ${Array.from(environments.keys()).join(', ')}`);
+    console.error(`Falling back to: ${firstEnv}`);
+    defaultEnvironment = firstEnv;
+  } else {
+    console.error(`WARNING: Default environment '${defaultEnvironment}' not found and no environments configured`);
+    console.error('Tools will fail until credentials are configured.');
+  }
 }
 
-console.error(`Default environment: ${defaultEnvironment}`);
-console.error(`Available environments: ${Array.from(environments.keys()).join(', ')}`);
+if (environments.size > 0) {
+  console.error(`Default environment: ${defaultEnvironment}`);
+  console.error(`Available environments: ${Array.from(environments.keys()).join(', ')}`);
+}
 
 // Initialize TDX clients for each environment
 const tdxClients = new Map<string, TDXClient>();
