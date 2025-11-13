@@ -51,16 +51,27 @@ Once installed, ask Claude: *"Show me all open tickets assigned to John Doe"* or
 - Credentials stored in `~/.config/tdx-mcp/` (outside project directory)
 - DPAPI ties encryption to your Windows user account - others cannot decrypt
 - Password format: `"TDX_PASSWORD": "dpapi:AQAAANCMnd8BFdERjHoAwE..."`
-- **Setup tool**: Run `npm run setup-env-config` for interactive, secure credential setup (password never appears in chat)
+- **Setup tool**: Run `npm run setup` for interactive, secure credential setup
+  - Handles dependencies, build, and credential creation automatically
+  - Password masked in terminal (never appears in chat)
+  - Simple mode: `npm run setup` (production only, 2 questions)
+  - Advanced mode: `npm run setup-advanced` (all environments)
 
 ---
 
 ## Multiple Environments
 
-Run setup for each environment to create separate credential files:
-- `prod-credentials.json` - Production
-- `dev-credentials.json` - Development
-- `canary-credentials.json` - Canary
+The default setup configures production only. To add other environments (test/dev/canary):
+
+```bash
+npm run setup-advanced
+```
+
+This creates separate credential files:
+- `prod-credentials.json` - Production (solutions.teamdynamix.com)
+- `test-credentials.json` - Test (part01-demo.teamdynamixtest.com)
+- `canary-credentials.json` - Canary (eng.teamdynamixcanary.com)
+- `dev-credentials.json` - Development (localhost/TDDev)
 
 Claude can then specify environment in tool calls: `{ ticketId: 12345, environment: "dev" }`
 

@@ -27,9 +27,7 @@
 
 When the user requests setup (e.g., "Set up the TeamDynamix MCP server"), follow these steps exactly:
 
-### Step 0: Install Dependencies and Build
-
-**IMPORTANT**: Always run these first, even if user already cloned the repo.
+### Step 0: Verify Correct Directory
 
 1. **Check if in correct directory**:
    ```bash
@@ -37,134 +35,55 @@ When the user requests setup (e.g., "Set up the TeamDynamix MCP server"), follow
    ```
    - If not in directory, ask user for path or help them navigate
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-   - If fails, report error and stop
-   - Common issue: Node.js not installed or wrong version
-
-3. **Build TypeScript**:
-   ```bash
-   npm run build
-   ```
-   - If fails, report error and stop
-   - This creates `dist/index.js` required for MCP server
-
-4. **Verify build succeeded**:
-   ```bash
-   test -f dist/index.js && echo "✓ Build successful" || echo "✗ Build failed"
-   ```
+**Note**: The setup script now handles dependency installation and build automatically.
 
 ### Step 1: Run Interactive Setup Tool
 
-**IMPORTANT**: The setup tool MUST be run in a separate terminal to properly mask password entry. DO NOT attempt to run it via Claude's Bash tool - it will fail because password input requires an interactive terminal.
-
-1. **Get current working directory** to construct the command with full path:
+1. **Get current working directory and store as MCP_SERVER_PATH**:
    ```bash
    pwd
    ```
+   Store the result, converting Git Bash format to Windows format if needed:
+   - Git Bash format: `/c/source/MCP/tdx-api-tickets-mcp`
+   - Windows format: `C:\source\MCP\tdx-api-tickets-mcp`
 
-2. **Tell user to run the setup tool in a separate terminal window**:
+   This MCP_SERVER_PATH will be used in Step 3 for the .mcp.json configuration.
+
+2. **Tell user to run the setup tool** (use EXACT text below, do NOT add explanations of what the setup tool does):
+
+   Now please run the interactive setup tool by pasting the below commands in a SEPARATE terminal window:
+
    ```
-   Copy and paste the following into a SEPARATE terminal window to generate credentials for the Ticket API MCP server (or type "skip"):
-
-   ---------------------------------------
-   cd {PATH_FROM_PWD}
-   npm run setup-env-config
-   ---------------------------------------
-
-   Once complete, copy and paste the entire output (including TDXCREDS:START and TDXCREDS:END) back to me.
-   ```
-
-   **Note**: Replace `{PATH_FROM_PWD}` with the actual path returned from `pwd` in Step 1.
-
-   **If user tries to run via Claude**: Politely remind them that the setup tool cannot be run through Claude's Bash tool and they must use a separate terminal window for password security.
-
-### Step 2: Parse Setup Tool Output
-
-When user pastes the `TDXCREDS:START...END` output (or user types 'skip' to skip to Step 4):
-
-1. **Validate format**:
-   - Must contain `TDXCREDS:START` and `TDXCREDS:END`
-   - Must have all required fields: `environment`, `baseUrl`, `username`, `password`, `appIds`
-
-2. **Parse the output**:
-   ```typescript
-   const match = output.match(/TDXCREDS:START\s*([\s\S]*?)\s*TDXCREDS:END/);
-   if (!match) {
-     console.error('✗ Invalid format: Missing TDXCREDS markers');
-     return;
-   }
-
-   const lines = match[1].trim().split('\n');
-   const config: Record<string, string> = {};
-   for (const line of lines) {
-     const [key, ...valueParts] = line.split('=');
-     config[key.trim()] = valueParts.join('=').trim();
-   }
-
-   // Validate required fields
-   const required = ['environment', 'baseUrl', 'username', 'password', 'appIds'];
-   for (const field of required) {
-     if (!config[field]) {
-       console.error(`✗ Missing required field: ${field}`);
-       return;
-     }
-   }
+   --------------------
+   cd {MCP_SERVER_PATH}
+   npm run setup
+   --------------------
    ```
 
-3. **Validate password format**:
-   - Must start with `dpapi:`
-   - If not, reject and ask user to run setup tool again
+   When complete, return here and say: "complete"
 
-### Step 3: Create Credentials File
+   **Note**: Replace `{MCP_SERVER_PATH}` with the Windows-formatted path from step 1 above.
 
-Using the parsed configuration from Step 2:
+### Step 2: Verify Credentials Created
 
-1. **Determine credential file path**:
+When user says "complete":
+
+1. **Read the credentials file** to verify setup succeeded:
    ```bash
-   # Windows: C:\Users\username\.config\tdx-mcp\{environment}-credentials.json
-   # Example: C:\Users\john\.config\tdx-mcp\prod-credentials.json
+   cat "$HOME/.config/tdx-mcp/prod-credentials.json"
    ```
 
-2. **Check if credentials already exist**:
-   ```bash
-   test -f "$HOME/.config/tdx-mcp/${environment}-credentials.json" && echo "✓ File exists" || echo "✗ File does not exist"
-   ```
+2. **Validate the credentials file**:
+   - Must exist and contain valid JSON
+   - Must have required fields: `TDX_BASE_URL`, `TDX_USERNAME`, `TDX_PASSWORD`, `TDX_TICKET_APP_IDS`
+   - Password must start with `dpapi:`
 
-   If file exists, ask user:
-   ```
-   Credentials for '{environment}' already exist. Do you want to overwrite them with the new credentials?
-   ```
+3. **If file doesn't exist or is invalid**:
+   - Tell user the setup didn't complete successfully
+   - Ask them to check terminal output for errors
+   - Suggest rerunning the setup command
 
-   If user declines, skip to Step 4. If user accepts or file doesn't exist, continue.
-
-3. **Create directory if needed**:
-   ```bash
-   powershell -Command "New-Item -ItemType Directory -Force -Path \"$HOME\.config\tdx-mcp\""
-   ```
-
-   **Note**: Use `$HOME` not `$env:USERPROFILE` to avoid path format errors.
-
-4. **Create credentials JSON** using parsed values:
-   ```json
-   {
-     "TDX_BASE_URL": "{baseUrl from parsed config}",
-     "TDX_USERNAME": "{username from parsed config}",
-     "TDX_PASSWORD": "{password from parsed config}",
-     "TDX_TICKET_APP_IDS": "{appIds from parsed config}"
-   }
-   ```
-
-5. **Write file** using Write tool to `~/.config/tdx-mcp/{environment}-credentials.json`
-
-6. **Verify file created**:
-   ```bash
-   test -f "$HOME/.config/tdx-mcp/${environment}-credentials.json" && echo "✓ Credentials saved"
-   ```
-
-### Step 4: Install MCP Server to Target Project
+### Step 3: Install MCP Server to Target Project
 
 **IMPORTANT**: This MCP server is installed **per-project**, not globally. Each project that wants to use it gets its own `.mcp.json` file.
 
@@ -174,56 +93,98 @@ Using the parsed configuration from Step 2:
 - Otherwise the other project won't know where to find the MCP server
 - Claude automatically converts relative to absolute during setup
 
-1. **Ask for target project path**:
-   ```
-   Which project should use this MCP server?
-   Enter the project directory path (example: 'C:\source\my-project'):
+1. **Ask user where to install MCP server** using AskUserQuestion tool:
+   ```javascript
+   AskUserQuestion({
+     questions: [{
+       question: "Where do you open Claude Code?",
+       header: "Install Path",
+       multiSelect: false,
+       options: [
+         {
+           label: "C:\\source\\TDDev\\enterprise",
+           description: "Standard TDDev enterprise directory - install .mcp.json there"
+         },
+         {
+           label: "Don't install",
+           description: "Use MCP server only from this folder (no .mcp.json installation)"
+         },
+         {
+           label: "Custom path",
+           description: "Enter a different directory path"
+         }
+       ]
+     }]
+   })
    ```
 
-2. **Validate path exists**:
-   ```bash
-   test -d "PROJECT_PATH" && echo "✓ Directory exists" || echo "✗ Directory not found"
-   ```
-   - If not found, ask user: "Would you like me to create this directory? (yes/no)"
-   - If yes, create directory: `mkdir -p "PROJECT_PATH"`
-   - If no, ask for path again
+2. **Handle user choice**:
+   - **If "C:\\source\\TDDev\\enterprise"**: Use `C:\source\TDDev\enterprise` as PROJECT_PATH
+   - **If "Don't install"**: Say: "You can open Claude Code in the MCP Server folder and the server will be available for that session." Then exit successfully.
+   - **If "Custom path"**: Ask user to enter custom path
 
-3. **Check not configuring self**:
+3. **Validate and handle `.mcp.json` installation**:
+
+   Single bash command to check directory and file status:
    ```bash
-   # Compare absolute paths
-   PROJECT_ABS=$(cd "PROJECT_PATH" && pwd)
+   PROJECT_PATH="<path_from_step_2>"
    MCP_ABS=$(pwd)
-   if [ "$PROJECT_ABS" = "$MCP_ABS" ]; then
-     echo "✗ Cannot install MCP server into itself"
-     echo "   The MCP server project doesn't need to reference itself"
-     echo "   Please specify a different project that will USE this MCP server"
-     # Ask for path again
+
+   # Check everything at once
+   if [ ! -d "$PROJECT_PATH" ]; then
+     echo "DIR_NOT_FOUND"
+   elif [ "$(cd "$PROJECT_PATH" && pwd)" = "$MCP_ABS" ]; then
+     echo "SELF_REFERENCE"
+   elif [ -f "$PROJECT_PATH/.mcp.json" ]; then
+     echo "FILE_EXISTS"
+   else
+     echo "CREATE_NEW"
    fi
    ```
 
-4. **Get absolute path to MCP server**:
-   ```bash
-   MCP_SERVER_PATH=$(cd C:\source\MCP\tdx-api-tickets-mcp && pwd)
-   ```
+   **Handle each case**:
 
-5. **Copy `.mcp.json` template to target project**:
-   - Read the `.mcp.json` from this repo
-   - Update the `args` path to absolute path: `${MCP_SERVER_PATH}/dist/index.js`
-   - Write to `${PROJECT_PATH}/.mcp.json`
+   - **DIR_NOT_FOUND**: Ask user: "Directory doesn't exist. Would you like me to create it? (yes/no)"
+     - If yes: `mkdir -p "PROJECT_PATH"` then proceed to CREATE_NEW
+     - If no: Go back to step 1
 
-   Example `.mcp.json` content:
+   - **SELF_REFERENCE**: Say: "Cannot install MCP server into itself, it already works if Claude is opened here. Please specify a different directory." Then go back to step 1
+
+   - **FILE_EXISTS**: Read existing file, show current configuration, then use AskUserQuestion:
+     ```javascript
+     AskUserQuestion({
+       questions: [{
+         question: "A .mcp.json file already exists. What would you like to do?",
+         header: "File Exists",
+         multiSelect: false,
+         options: [
+           {label: "Update configuration", description: "Update paths and credentials to match current setup"},
+           {label: "Keep existing", description: "Leave .mcp.json unchanged and skip installation"},
+           {label: "Show me first", description: "Display the existing configuration before deciding"}
+         ]
+       }]
+     })
+     ```
+     - **Update configuration**: Edit existing file to update args path and credentials
+     - **Keep existing**: Skip to completion message (file unchanged)
+     - **Show me first**: Display file contents, then ask again
+
+   - **CREATE_NEW**: Create new `.mcp.json` with configuration below
+
+4. **Generate `.mcp.json` content** (for CREATE_NEW or Update configuration):
+
+   Use the MCP_SERVER_PATH from Step 1 (already converted to Windows format if needed).
+
+   Content template (adjust based on Step 2 credentials):
    ```json
    {
      "mcpServers": {
        "tdx-api-tickets-mcp": {
          "type": "stdio",
          "command": "node",
-         "args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"],
+         "args": ["<MCP_SERVER_PATH>/dist/index.js"],
          "env": {
            "TDX_PROD_CREDENTIALS_FILE": "~/.config/tdx-mcp/prod-credentials.json",
-           "TDX_TEST_CREDENTIALS_FILE": "~/.config/tdx-mcp/test-credentials.json",
-           "TDX_CANARY_CREDENTIALS_FILE": "~/.config/tdx-mcp/canary-credentials.json",
-           "TDX_DEV_CREDENTIALS_FILE": "~/.config/tdx-mcp/dev-credentials.json",
            "TDX_DEFAULT_ENVIRONMENT": "prod"
          }
        }
@@ -231,11 +192,13 @@ Using the parsed configuration from Step 2:
    }
    ```
 
-### Step 5: Completion
+   **Note**: Only include env vars for configured environments (check `~/.config/tdx-mcp/` for which credential files exist). If user later adds environments via `npm run setup-advanced`, they can rerun this setup to update the .mcp.json.
+
+### Step 4: Completion
 
 Report to user:
 ```
-✓ Setup complete!
+🎉 Setup complete!
 
 Files created:
   • Credentials: ~/.config/tdx-mcp/{environment}-credentials.json (if configured)
@@ -244,11 +207,19 @@ Files created:
 The MCP server is now available in the target project.
 
 Next steps:
-  1. Open the target project in Claude Code (or restart if already open)
-  2. Test by asking: "List available TeamDynamix reports"
 
-Note: Credentials in ~/.config/tdx-mcp/ are shared across all projects.
-      Each project has its own .mcp.json pointing to these credentials.
+1. Open a terminal to your project directory:
+
+   cd {PROJECT_PATH}
+
+2. Open Claude Code (or restart if already open)
+
+3. Test the MCP server:
+   - "Show me all TDX reports"
+   - "Show me all tickets assigned to me"
+
+To setup other environments (dev/canary/test), rerun: npm run setup-advanced
+To install the MCP server to another directory, rerun: npm run setup
 ```
 
 ---
@@ -293,20 +264,38 @@ If user asks to update/modify existing setup OR show current configuration:
      • Copy .mcp.json to another project
    ```
 
-5. **Ask what to update** (if user wants to modify):
-   ```
-   What would you like to do?
-   [1] Change credentials (username/password)
-   [2] Modify application selection
-   [3] Add new environment (test/canary/dev)
-   [4] Copy .mcp.json to another project
-
-   Select option (1-4):
+5. **Ask what to update** (if user wants to modify) using AskUserQuestion tool:
+   ```javascript
+   AskUserQuestion({
+     questions: [{
+       question: "What would you like to do?",
+       header: "Update Action",
+       multiSelect: false,
+       options: [
+         {
+           label: "Change credentials",
+           description: "Update username/password for existing environment"
+         },
+         {
+           label: "Modify applications",
+           description: "Change which TeamDynamix applications are configured"
+         },
+         {
+           label: "Add environment",
+           description: "Add new environment (test/canary/dev)"
+         },
+         {
+           label: "Copy to project",
+           description: "Install .mcp.json to another project"
+         }
+       ]
+     }]
+   })
    ```
 
 6. **Apply updates** based on selection:
-   - Options 1-3: Update credential files
-   - Option 4: Help copy `.mcp.json` to another project (update 'args' path to absolute)
+   - **"Change credentials"** or **"Modify applications"** or **"Add environment"**: Update credential files
+   - **"Copy to project"**: Help copy `.mcp.json` to another project (update 'args' path to absolute)
 
 ---
 
@@ -353,7 +342,7 @@ If user asks to update/modify existing setup OR show current configuration:
 **Password encryption**:
 - **DPAPI encryption required** (Windows only): `"TDX_PASSWORD": "dpapi:AQAAANCMnd8BFdERjHoAwE..."`
 - Claude handles password encryption during setup using PowerShell DPAPI commands
-- Passwords are tied to your Windows user account and cannot be decrypted by others
+- Passwords are tied to your Windows user account - other users on this computer cannot decrypt them
 
 **Environment variables**:
 - `TDX_PROD_CREDENTIALS_FILE`: Path to prod credentials

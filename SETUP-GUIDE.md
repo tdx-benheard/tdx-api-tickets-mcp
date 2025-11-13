@@ -26,16 +26,30 @@ This guide shows you how to set up the TeamDynamix MCP server by simply asking C
 
 ## What Claude Does During Setup
 
-### Step 0: Install Dependencies and Build Project
+### Step 0: Verify Directory
 
-Claude will automatically:
-- Run `npm install` to install dependencies
-- Run `npm run build` to compile TypeScript
-- Verify the build succeeded
+Claude checks that you're in the correct directory (the MCP server folder).
 
 ### Step 1: Run Interactive Setup Tool
 
 Claude will tell you to run the setup command in a separate terminal, providing the correct path for your system.
+
+**Simple Setup (Production Only):**
+```bash
+npm run setup
+```
+- Automatically installs dependencies and builds the project
+- Asks only: username and password
+- Configures production environment automatically
+- Auto-selects application if only one is found
+- Saves credentials directly to `~/.config/tdx-mcp/prod-credentials.json`
+
+**Advanced Setup (All Environments):**
+```bash
+npm run setup-advanced
+```
+- Full configuration: environment, domain, username, password, apps
+- Use for test/dev/canary environments
 
 **Security Notes**:
 - Your password is entered in your terminal, not in chat
@@ -44,46 +58,33 @@ Claude will tell you to run the setup command in a separate terminal, providing 
 - Only you can decrypt the password on your machine
 - Encrypted passwords are stored in `~/.config/tdx-mcp/` (outside version control)
 
-### Step 2: Paste Configuration to Claude
+### Step 2: Return to Claude
 
-After the tool completes:
+After the tool completes, simply return to Claude Code and say: **"complete"**
 
-1. **Copy the output** (if not already in clipboard)
-2. **Paste it to Claude Code** (the entire `TDXCREDS:START...END` block)
-3. Claude will parse and validate the configuration
+Claude will verify the credentials were created successfully.
 
-### Step 3: Create Configuration Files
+### Step 3: Choose Installation Location
 
-Claude automatically creates:
+Claude asks where you want to use the MCP server:
 
-**Credentials file** at `~/.config/tdx-mcp/{environment}-credentials.json`:
-```json
-{
-  "TDX_BASE_URL": "https://solutions.teamdynamix.com/TDWebApi",
-  "TDX_USERNAME": "john.doe@company.com",
-  "TDX_PASSWORD": "dpapi:AQAAANCMnd8BFdERjHoAwE...",
-  "TDX_TICKET_APP_IDS": "129,245"
-}
 ```
+Where do you open Claude Code?
 
-### Step 4: Install to Target Project
-
-Claude asks:
-```
-Which project should use this MCP server?
-Enter project directory path
-Example: 'C:\source\my-project'
+[1] C:\source\TDDev\enterprise
+[2] Don't setup MCP server (I'll use it from the MCP server folder)
+[3] Enter custom path
 ```
 
 **What happens:**
-- Copies `.mcp.json` to your target project
-- **Converts relative path to absolute path** (critical step!)
-  - From: `"args": ["./dist/index.js"]`
-  - To: `"args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"]`
+- **Option 1 or 3**: Copies `.mcp.json` to your target project with absolute path
+- **Option 2**: No `.mcp.json` needed - you'll use Claude Code from the MCP server folder itself
 
-⚠️ **Why absolute paths?** The target project needs to know where to find the MCP server. Relative paths only work within the MCP server's own directory.
+⚠️ **Why absolute paths?** When installing to another project, the `.mcp.json` needs the full path to find the MCP server. Example:
+  - From: `"args": ["./dist/index.js"]` (only works in MCP server folder)
+  - To: `"args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"]` (works anywhere)
 
-**Example `.mcp.json` created:**
+**Example `.mcp.json` created (production only):**
 ```json
 {
   "mcpServers": {
@@ -93,9 +94,6 @@ Example: 'C:\source\my-project'
       "args": ["C:/source/MCP/tdx-api-tickets-mcp/dist/index.js"],
       "env": {
         "TDX_PROD_CREDENTIALS_FILE": "~/.config/tdx-mcp/prod-credentials.json",
-        "TDX_TEST_CREDENTIALS_FILE": "~/.config/tdx-mcp/test-credentials.json",
-        "TDX_CANARY_CREDENTIALS_FILE": "~/.config/tdx-mcp/canary-credentials.json",
-        "TDX_DEV_CREDENTIALS_FILE": "~/.config/tdx-mcp/dev-credentials.json",
         "TDX_DEFAULT_ENVIRONMENT": "prod"
       }
     }
@@ -103,7 +101,9 @@ Example: 'C:\source\my-project'
 }
 ```
 
-### Step 5: Final Instructions
+**Note:** The `.mcp.json` only includes environment variables for configured environments. If you later run `npm run setup-advanced` for test/dev/canary, those will be added.
+
+### Step 4: Final Instructions
 
 Claude tells you:
 - Where files were created
@@ -114,21 +114,29 @@ Claude tells you:
 
 After Claude completes setup and you restart Claude Code, test by asking:
 
-> "List available TeamDynamix reports"
+> "Show me all TDX reports"
 
 or
 
-> "Get ticket 12345"
+> "Show me all tickets assigned to me"
 
 ## Multiple Environments
 
-You can run setup multiple times for different environments:
+The default setup configures production only. To add other environments (test/dev/canary):
 
-1. First time: "Set up TeamDynamix MCP for production"
-2. Second time: "Set up TeamDynamix MCP for development"
-3. Third time: "Set up TeamDynamix MCP for canary"
+**Option 1: Ask Claude**
+> "Set up TeamDynamix MCP for development environment"
 
-Each creates a separate credential file (`prod-credentials.json`, `dev-credentials.json`, `canary-credentials.json`).
+**Option 2: Manual**
+```bash
+npm run setup-advanced
+```
+
+Each run creates a separate credential file:
+- `prod-credentials.json` (created by default)
+- `test-credentials.json`
+- `canary-credentials.json`
+- `dev-credentials.json`
 
 ## Updating Configuration
 
