@@ -296,6 +296,8 @@ List all groups.
 - 5 = Closed
 - 6 = Closed and Approved
 - 711 = Cancelled
+- 191349 = Pending Client Review (custom)
+- 568 = Ready for Test (custom)
 
 **Priority IDs:**
 - 8 = Low

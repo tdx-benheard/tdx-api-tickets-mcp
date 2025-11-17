@@ -1,7 +1,6 @@
 # TeamDynamix Tickets API MCP Server - Claude Reference
 
 > **For detailed tool usage:** [TOOLS.md](./TOOLS.md)
-> **For user setup guide:** [SETUP-GUIDE.md](./SETUP-GUIDE.md)
 
 ## Quick Reference
 

@@ -1,0 +1,19 @@
+# User Configuration Template
+
+Copy to `CLAUDE.local.md` (gitignored) and fill in your values:
+
+```bash
+cp CLAUDE.local.md.template CLAUDE.local.md
+```
+
+## Required Variables
+
+```
+{USERNAME}         = your.username       # Example: john.smith
+{USER_UID}         = your-tdx-user-uid  # Find via: Ask Claude "What's my TDX user UID?"
+{RELEASE_VERSION}  = 12.1                # Current release version
+```
+
+## Ticket Selection
+
+When asking "get me a ticket", use report "All Open Tickets"
