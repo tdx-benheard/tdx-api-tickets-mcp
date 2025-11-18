@@ -26,6 +26,8 @@ powershell "& '{MSBUILD_PATH}' Monorepo.sln /t:Build /p:Configuration=Debug /m /
 - Database schema changes (`TeamDynamixDB`)
 - Unsure of dependencies
 
+**⚠️ Objects folder dependency note:** If you build any project in `objects/`, you must rebuild any dependent project you're testing to get the updated DLL reference.
+
 **When to build single project:**
 - Changes isolated to one application (TDClient, TDNext, TDAdmin, etc.)
 - UI-only changes (controllers, views, scripts)
