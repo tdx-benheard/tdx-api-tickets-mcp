@@ -270,7 +270,7 @@ export const tools: Tool[] = [
         },
         dataSortExpression: {
           type: 'string',
-          description: 'Optional: Sort expression for report data',
+          description: 'Optional: Sort expression using column name (e.g., "TicketID", "StatusName", "ResponsibleFullName"). Use the ColumnName from report metadata, not the display header. Add " DESC" for descending (e.g., "TicketID DESC"). Invalid column names will return an error with valid options.',
           default: '',
         },
         page: {

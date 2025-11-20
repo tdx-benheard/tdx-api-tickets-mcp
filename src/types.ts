@@ -198,9 +198,11 @@ export interface ReportData {
   Name: string;
   Description?: string;
   Columns?: ReportColumn[];
+  DisplayedColumns?: DisplayedColumn[];
   DataRows?: any[][];
   MaxResults?: number;
   SortExpression?: string;
+  SortOrder?: SortOrderItem[];
   Pagination?: PaginationMetadata;
 }
 
@@ -212,6 +214,30 @@ export interface ReportColumn {
   DisplayName?: string;
   DataType?: string;
   Width?: number;
+}
+
+/**
+ * Displayed column definition (from API response)
+ */
+export interface DisplayedColumn {
+  HeaderText?: string;
+  ColumnName: string;
+  DataType?: number;
+  SortColumnExpression?: string;
+  SortColumnName?: string;
+  SortDataType?: number;
+  Aggregate?: number;
+  Component?: number;
+  FooterExpression?: string | null;
+}
+
+/**
+ * Sort order item (from API response)
+ */
+export interface SortOrderItem {
+  ColumnLabel?: string;
+  ColumnName: string;
+  IsAscending: boolean;
 }
 
 /**

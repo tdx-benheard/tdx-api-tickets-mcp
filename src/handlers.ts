@@ -219,6 +219,32 @@ export class ToolHandlers {
       args?.dataSortExpression || ''
     );
 
+    // Validate dataSortExpression if provided and data is returned
+    if (args?.dataSortExpression && results.DisplayedColumns && Array.isArray(results.DisplayedColumns)) {
+      // Extract the column name from the sort expression (handle "ColumnName DESC" format)
+      const sortExpr = args.dataSortExpression.trim();
+      const columnName = sortExpr.replace(/\s+(ASC|DESC)\s*$/i, '').trim();
+
+      // Check if the SortOrder was applied (means the sort was valid)
+      // API returns empty array [] when sort column is invalid
+      const sortWasApplied = results.SortOrder &&
+                             Array.isArray(results.SortOrder) &&
+                             results.SortOrder.length > 0;
+
+      if (!sortWasApplied) {
+        // Get valid column names from report metadata
+        const validColumns = results.DisplayedColumns
+          .map((col: any) => col.ColumnName)
+          .filter((name: string) => name); // Filter out any empty names
+
+        throw new Error(
+          `Invalid sort column "${columnName}". Valid column names for this report:\n` +
+          validColumns.map((col: string) => `  - ${col}`).join('\n') +
+          `\n\nUse the exact ColumnName (e.g., "TicketID" not "ID"). Add " DESC" for descending order.`
+        );
+      }
+    }
+
     // Apply client-side filtering and pagination if DataRows exist
     if (results.DataRows && Array.isArray(results.DataRows)) {
       let filteredRows = results.DataRows;
