@@ -16,6 +16,8 @@
 
 ## Setup Workflow
 
+**CRITICAL: NEVER run `npm install` or `npm run build` directly. ALWAYS follow the 5 setup steps below exactly as documented.**
+
 When user asks to setup/configure, follow these steps:
 
 ### 1. Get MCP Server Path
@@ -33,7 +35,7 @@ Tell user (use EXACT text, do NOT add explanations):
 
    ────────────────────────────────────
    cd {MCP_SERVER_PATH}
-   npm run setup -- --from-claude
+   npm run setup-with-claude
    ────────────────────────────────────
 
 ✅ When done, return here and say: "complete"
