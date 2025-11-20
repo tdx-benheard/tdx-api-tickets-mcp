@@ -6,7 +6,7 @@ This file is an **index of workflow instructions for Claude Code** (the AI assis
 
 **Usage:**
 - Copy this file and the `claude-workflows/` directory to your `.claude/` folder
-- Reference it in your `.claude/CLAUDE.md` with: `See CLAUDE-WORKFLOWS.md for workflow instructions`
+- Reference it in your `.claude/CLAUDE.local.md` with: `See CLAUDE-WORKFLOWS.md for workflow instructions`
 - Claude Code will follow these workflows when you work with tickets, commits, branches, etc.
 
 **User-specific configuration:** See `CLAUDE.local.md` for your username, report IDs, release version, etc.

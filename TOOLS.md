@@ -48,13 +48,76 @@ Example: `{ ticketId: 12345, environment: "dev" }`
 
 ## Ticket Management
 
+### `tdx_search_tickets`
+Search for tickets with lightweight results (only ID, Title, Status, Responsible, Modified Date, Priority). **Use this for finding tickets with tasks assigned to you.**
+
+**Parameters:**
+- `searchText` (string) - Text to search for
+- `statusIDs` (number[]) - Filter by status IDs (e.g., [2] for Open, [3] for In Process)
+- `priorityIDs` (number[]) - Filter by priority IDs
+- `responsibilityUids` (string[]) - Filter by responsible user UIDs (includes task responsibility)
+- `completedTaskResponsibilityFilter` (boolean) - When used with responsibilityUids: false = active tasks, true = completed tasks
+- `maxResults` (number) - Default: 50, max: 1000
+- `appId` (string, optional)
+- `environment` (string, optional)
+
+**Example: Find tickets with active tasks assigned to you:**
+```javascript
+// Step 1: Get your UID
+tdx_get_current_user()
+
+// Step 2: Search with task filter
+tdx_search_tickets({
+  responsibilityUids: ["your-uid-here"],
+  completedTaskResponsibilityFilter: false
+})
+```
+
+**Response:** Lightweight ticket objects (~93% smaller than full tickets)
+```json
+[
+  {
+    "ID": 29290570,
+    "Title": "Error page in dark mode",
+    "StatusName": "In Process",
+    "ResponsibleFullName": "Ben Heard",
+    "ModifiedDate": "2025-11-20T05:08:42.333Z",
+    "PriorityName": "Low"
+  }
+]
+```
+
+---
+
 ### `tdx_get_ticket`
-Get a single ticket by ID. App ID is auto-detected.
+Get a single ticket by ID with full details. App ID is auto-detected. **Automatically filters out bloated attribute choice data (85% size reduction).**
 
 **Parameters:**
 - `ticketId` (number, required)
 - `appId` (string, optional) - Override auto-detection
 - `environment` (string, optional)
+
+**Attribute Filtering:**
+The tool automatically filters custom attributes to remove excessive choice metadata:
+- **Before:** All possible choices with full metadata (DateCreated, DateModified, Order, IsActive, etc.)
+- **After:** Only selected choices with ID and Name
+- **Savings:** ~85% reduction in response size for tickets with many custom attributes
+
+Example filtered attribute:
+```json
+{
+  "ID": 12299,
+  "Name": "Support Tier",
+  "Value": "28033",
+  "ValueText": "Tier 3",
+  "SelectedChoices": [
+    {
+      "ID": 28033,
+      "Name": "Tier 3"
+    }
+  ]
+}
+```
 
 ---
 
@@ -109,6 +172,69 @@ Manage ticket tags.
 - `tags` (string[], required)
 - `appId` (string, optional)
 - `environment` (string, optional)
+
+---
+
+## Ticket Tasks Management
+
+### `tdx_list_ticket_tasks`
+Get all tasks on a ticket with lightweight results (ID, Title, Status, Responsible, Start/End dates, Percent Complete).
+
+**Parameters:**
+- `ticketId` (number, required)
+- `appId` (string, optional)
+- `environment` (string, optional)
+
+**Response:** Lightweight task objects (~87% smaller than full tasks)
+```json
+[
+  {
+    "ID": 7693631,
+    "Title": "Would we consider this a bug?",
+    "StatusName": null,
+    "ResponsibleFullName": "Ben Heard",
+    "StartDate": "2025-10-22T20:30:00Z",
+    "EndDate": "2025-10-23T13:30:00Z",
+    "PercentComplete": 0
+  }
+]
+```
+
+---
+
+### `tdx_get_ticket_task`
+Get full details for a specific task on a ticket.
+
+**Parameters:**
+- `ticketId` (number, required)
+- `taskId` (number, required)
+- `appId` (string, optional)
+- `environment` (string, optional)
+
+---
+
+### `tdx_update_ticket_task`
+Update a task by adding a comment/feed entry.
+
+**Parameters:**
+- `ticketId` (number, required)
+- `taskId` (number, required)
+- `comments` (string, required) - The comment text to add
+- `isPrivate` (boolean) - Default: false
+- `notify` (string[]) - Array of email addresses to notify
+- `appId` (string, optional)
+- `environment` (string, optional)
+
+**Example:**
+```javascript
+tdx_update_ticket_task({
+  ticketId: 29228941,
+  taskId: 7693631,
+  comments: "Task completed - tested and verified",
+  isPrivate: false,
+  notify: ["manager@example.com"]
+})
+```
 
 ---
 

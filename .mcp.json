@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "tdx-api-tickets-mcp": {
+    "tdx-tickets-mcp": {
       "type": "stdio",
       "command": "node",
       "args": ["./dist/index.js"],

@@ -8,7 +8,7 @@
  *   npm run setup-advanced  (full: choose environment, domain, etc.)
  */
 
-import { password, select, input, confirm, checkbox } from '@inquirer/prompts';
+import { password, select, input, confirm } from '@inquirer/prompts';
 import { execSync } from 'child_process';
 import axios from 'axios';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
@@ -27,6 +27,9 @@ if (majorVersion < 18) {
 
 // Check for --advanced flag
 const isAdvancedMode = process.argv.includes('--advanced');
+
+// Check for --from-claude flag (indicates setup invoked by Claude)
+const isFromClaude = process.argv.includes('--from-claude');
 
 console.log('');
 console.log('========================================================');
@@ -182,68 +185,66 @@ async function main() {
     console.log('🔍 Fetching available ticketing applications...');
 
     let selectedAppIds: string;
-    try {
-      const appsResponse = await axios.get(`${baseUrl}/api/applications`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      });
 
-      const ticketingApps = appsResponse.data.filter(
-        (app: any) => app.Type === 'Ticketing' && app.Active
-      );
-
-      if (ticketingApps.length === 0) {
-        console.log('\n⚠ No active ticketing applications found automatically');
-        selectedAppIds = await input({
-          message: 'Enter application IDs manually (comma-separated)',
+    // Basic mode: Auto-use app ID 129
+    if (!isAdvancedMode) {
+      selectedAppIds = '129';
+      console.log('\n✓ Using default application ID: 129');
+    } else {
+      // Advanced mode: Discover and let user select ONE app
+      try {
+        const appsResponse = await axios.get(`${baseUrl}/api/applications`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
         });
-      } else if (ticketingApps.length === 1) {
-        // Auto-select single app
-        const app = ticketingApps[0];
-        console.log(`\n✓ Found 1 ticketing application: ${app.Name} (ID: ${app.AppID})`);
-        selectedAppIds = app.AppID.toString();
-      } else {
-        // Multiple apps: Show checkbox
-        console.log(`\n✓ Found ${ticketingApps.length} ticketing application(s)\n`);
-        console.log('ℹ️  Use SPACE to select, arrow keys (↑/↓) to navigate, ENTER when done\n');
 
-        let selectedApps: string[] = [];
-        while (selectedApps.length === 0) {
-          selectedApps = await checkbox({
-            message: 'Select ticketing applications to connect',
+        const ticketingApps = appsResponse.data.filter(
+          (app: any) => app.Type === 'Ticketing' && app.Active
+        );
+
+        if (ticketingApps.length === 0) {
+          console.log('\n⚠ No active ticketing applications found automatically');
+          selectedAppIds = await input({
+            message: 'Enter application ID',
+          });
+        } else if (ticketingApps.length === 1) {
+          // Auto-select single app
+          const app = ticketingApps[0];
+          console.log(`\n✓ Found 1 ticketing application: ${app.Name} (ID: ${app.AppID})`);
+          selectedAppIds = app.AppID.toString();
+        } else {
+          // Multiple apps: Show single-select menu (use arrow keys + ENTER)
+          console.log(`\n✓ Found ${ticketingApps.length} ticketing application(s)\n`);
+          console.log('ℹ️  Use arrow keys (↑/↓) to navigate, ENTER to confirm\n');
+
+          const selectedApp = await select({
+            message: 'Select ticketing application',
             choices: ticketingApps.map((app: any) => ({
               name: `${app.Name} (ID: ${app.AppID})`,
               value: app.AppID.toString(),
-              checked: false,
             })),
             pageSize: 20,
           });
 
-          if (selectedApps.length === 0) {
-            console.error('\n❌ No applications selected!');
-            console.log('   ℹ️  You must select at least one application');
-            console.log('   ℹ️  Use SPACE to select, then press ENTER\n');
-          }
+          selectedAppIds = selectedApp;
         }
-
-        selectedAppIds = selectedApps.join(',');
+      } catch (error: any) {
+        console.log('\n⚠ Unable to fetch applications automatically');
+        if (error.response?.status) {
+          console.log(`   Error: HTTP ${error.response.status}: ${error.response.statusText}`);
+        } else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+          console.log('   Error: Request timed out');
+        } else {
+          console.log(`   Error: ${error.message}`);
+        }
+        console.log('');
+        selectedAppIds = await input({
+          message: 'Enter application ID',
+        });
       }
-    } catch (error: any) {
-      console.log('\n⚠ Unable to fetch applications automatically');
-      if (error.response?.status) {
-        console.log(`   Error: HTTP ${error.response.status}: ${error.response.statusText}`);
-      } else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-        console.log('   Error: Request timed out');
-      } else {
-        console.log(`   Error: ${error.message}`);
-      }
-      console.log('');
-      selectedAppIds = await input({
-        message: 'Enter application IDs manually (comma-separated)',
-      });
     }
 
     // Step 7: Encrypt password (now that everything else succeeded)
@@ -308,8 +309,16 @@ async function main() {
     console.log('Security Notes:');
     console.log('  • This encrypted password only works on this Windows user account');
     console.log('');
-    console.log('Next step:');
-    console.log('  Return to Claude Code and say: "complete"');
+
+    // Conditional completion message based on invocation context
+    if (isFromClaude) {
+      console.log('Next step:');
+      console.log('  Return to Claude Code and say: "complete"');
+    } else {
+      console.log('Next step:');
+      console.log(`  Credentials file has been configured in ${credFile}`);
+      console.log('  Ask Claude if you want to update the MCP reference for a project.');
+    }
     console.log('');
 
   } catch (error) {

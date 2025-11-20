@@ -33,7 +33,7 @@ Tell user (use EXACT text, do NOT add explanations):
 
    ────────────────────────────────────
    cd {MCP_SERVER_PATH}
-   npm run setup
+   npm run setup -- --from-claude
    ────────────────────────────────────
 
 ✅ When done, return here and say: "complete"
@@ -72,10 +72,10 @@ Handle cases:
 ```json
 {
   "mcpServers": {
-    "tdx-api-tickets-mcp": {
+    "tdx-tickets-mcp": {
       "type": "stdio",
       "command": "node",
-      "args": ["C:/path/to/tdx-api-tickets-mcp/dist/index.js"],
+      "args": ["C:/path/to/tdx-tickets-mcp/dist/index.js"],
       "env": {
         "TDX_PROD_CREDENTIALS_FILE": "~/.config/tdx-mcp/prod-credentials.json",
         "TDX_DEFAULT_ENVIRONMENT": "prod"

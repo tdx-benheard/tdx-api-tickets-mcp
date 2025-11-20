@@ -1,302 +1,272 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 
-// Common environment parameter for all tools
+// Common parameters for all tools
 const environmentParam = {
   environment: {
     type: 'string' as const,
-    description: 'Environment to use: "prod" for production, "dev" for development, "canary" for canary testing. Defaults to prod.',
+    description: 'Environment: prod/dev/canary',
     enum: ['prod', 'dev', 'canary'],
+  },
+};
+
+const appIdParam = {
+  appId: {
+    type: 'string' as const,
+    description: 'App ID override',
+  },
+};
+
+const ticketIdParam = {
+  ticketId: {
+    type: 'number' as const,
+    description: 'Ticket ID',
+  },
+};
+
+const taskIdParam = {
+  taskId: {
+    type: 'number' as const,
+    description: 'Task ID',
   },
 };
 
 export const tools: Tool[] = [
   {
     name: 'tdx_get_ticket',
-    description: 'Get a TeamDynamix ticket by ID',
+    description: 'Get ticket by ID',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
-        ticketId: {
-          type: 'number',
-          description: 'ID of the ticket to retrieve',
-        },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
-        },
+        ...ticketIdParam,
+        ...appIdParam,
       },
       required: ['ticketId'],
     },
   },
   {
     name: 'tdx_edit_ticket',
-    description: 'Edit a TeamDynamix ticket (full update - requires all fields)',
+    description: 'Edit ticket (full update - requires all fields)',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
-        ticketId: {
-          type: 'number',
-          description: 'ID of the ticket to edit',
-        },
+        ...ticketIdParam,
         ticketData: {
           type: 'object',
-          description: 'Complete ticket data for update',
+          description: 'Complete ticket data',
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
-        },
+        ...appIdParam,
       },
       required: ['ticketId', 'ticketData'],
     },
   },
   {
     name: 'tdx_update_ticket',
-    description: 'Update a TeamDynamix ticket (partial update)',
+    description: 'Update ticket (partial update)',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
-        ticketId: {
-          type: 'number',
-          description: 'ID of the ticket to update',
-        },
+        ...ticketIdParam,
         statusId: {
           type: 'number',
-          description: 'New status ID for the ticket',
+          description: 'Status ID',
         },
         priorityId: {
           type: 'number',
-          description: 'New priority ID for the ticket',
+          description: 'Priority ID',
         },
         title: {
           type: 'string',
-          description: 'New title for the ticket',
+          description: 'Title',
         },
         description: {
           type: 'string',
-          description: 'New description for the ticket',
+          description: 'Description',
         },
         comments: {
           type: 'string',
-          description: 'Comments to add to the ticket update',
+          description: 'Comments',
         },
         responsibleUid: {
           type: 'string',
-          description: 'UID of the person to assign the ticket to',
+          description: 'Responsible user UID',
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
-        },
+        ...appIdParam,
       },
       required: ['ticketId'],
     },
   },
   {
     name: 'tdx_add_ticket_feed',
-    description: 'Add a feed entry (comment/update) to a TeamDynamix ticket',
+    description: 'Add feed entry (comment/update) to ticket',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
-        ticketId: {
-          type: 'number',
-          description: 'ID of the ticket to add feed entry to',
-        },
+        ...ticketIdParam,
         comments: {
           type: 'string',
-          description: 'The comment text to add',
+          description: 'Comment text',
         },
         isPrivate: {
           type: 'boolean',
-          description: 'Whether the feed entry should be private',
+          description: 'Private entry',
           default: false,
         },
         notify: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Array of email addresses to notify',
+          description: 'Email addresses to notify',
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
-        },
+        ...appIdParam,
       },
       required: ['ticketId', 'comments'],
     },
   },
   {
     name: 'tdx_get_ticket_feed',
-    description: 'Get feed entries (comments/updates) for a TeamDynamix ticket. Returns up to 10 recent entries by default.',
+    description: 'Get feed entries (comments/updates) for ticket',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
-        ticketId: {
-          type: 'number',
-          description: 'ID of the ticket to get feed entries from',
-        },
+        ...ticketIdParam,
         top: {
           type: 'number',
-          description: 'Maximum number of feed entries to return (default: 10, 0 returns all)',
+          description: 'Max entries (0 = all)',
           default: 10,
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
-        },
+        ...appIdParam,
       },
       required: ['ticketId'],
     },
   },
   {
     name: 'tdx_add_ticket_tags',
-    description: 'Add tags to a TeamDynamix ticket. Note: Tags are stored but not returned in GET responses due to API limitations.',
+    description: 'Add tags to ticket',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
-        ticketId: {
-          type: 'number',
-          description: 'ID of the ticket to add tags to',
-        },
+        ...ticketIdParam,
         tags: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Array of tag names to add to the ticket',
+          description: 'Tag names',
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
-        },
+        ...appIdParam,
       },
       required: ['ticketId', 'tags'],
     },
   },
   {
     name: 'tdx_delete_ticket_tags',
-    description: 'Delete tags from a TeamDynamix ticket',
+    description: 'Delete tags from ticket',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
-        ticketId: {
-          type: 'number',
-          description: 'ID of the ticket to delete tags from',
-        },
+        ...ticketIdParam,
         tags: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Array of tag names to delete from the ticket',
+          description: 'Tag names',
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
-        },
+        ...appIdParam,
       },
       required: ['ticketId', 'tags'],
     },
   },
   {
     name: 'tdx_list_reports',
-    description: 'List all available TeamDynamix reports',
+    description: 'List all available reports',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         maxResults: {
           type: 'number',
-          description: 'Maximum number of results to return (default: 100)',
+          description: 'Max results',
           default: 100,
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default)',
-        },
+        ...appIdParam,
       },
     },
   },
   {
     name: 'tdx_search_reports',
-    description: 'Search for TeamDynamix reports by name. Use this to find reports like "All Open Tickets", "Open Tickets", "In Progress", etc. before running them with tdx_run_report. Common patterns: "open", "in progress", "closed", "all tickets".',
+    description: 'Search reports by name (use with tdx_run_report)',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         searchText: {
           type: 'string',
-          description: 'Text to search for in report names',
+          description: 'Search text',
         },
         maxResults: {
           type: 'number',
-          description: 'Maximum number of results to return (default: 50)',
+          description: 'Max results',
           default: 50,
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default)',
-        },
+        ...appIdParam,
       },
       required: ['searchText'],
     },
   },
   {
     name: 'tdx_run_report',
-    description: 'Run a TeamDynamix report to retrieve ticket lists (PREFERRED for listing multiple tickets - much more efficient than search). Supports client-side filtering and pagination. Use tdx_search_reports to find reports like "All Open Tickets", "Open Tickets", etc.',
+    description: 'Run report (preferred for multiple tickets). Supports filtering and pagination.',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         reportId: {
           type: 'number',
-          description: 'ID of the report to run',
+          description: 'Report ID',
         },
-        appId: {
-          type: 'string',
-          description: 'Optional: TeamDynamix application ID (overrides default)',
-        },
+        ...appIdParam,
         withData: {
           type: 'boolean',
-          description: 'Optional: Include report data in response (default: false)',
+          description: 'Include data',
           default: false,
         },
         dataSortExpression: {
           type: 'string',
-          description: 'Optional: Sort expression using column name (e.g., "TicketID", "StatusName", "ResponsibleFullName"). Use the ColumnName from report metadata, not the display header. Add " DESC" for descending (e.g., "TicketID DESC"). Invalid column names will return an error with valid options.',
+          description: 'Sort by column (add " DESC" for descending)',
           default: '',
         },
         page: {
           type: 'number',
-          description: 'Optional: Page number to retrieve (1-based, alternative to offset/limit)',
+          description: 'Page number (1-based)',
         },
         pageSize: {
           type: 'number',
-          description: 'Optional: Number of rows per page (default: 50, used with page parameter)',
+          description: 'Rows per page',
           default: 50,
         },
         limit: {
           type: 'number',
-          description: 'Optional: Limit results to N rows (applied after fetching from API, alternative to page/pageSize)',
+          description: 'Limit results to N rows',
         },
         offset: {
           type: 'number',
-          description: 'Optional: Skip first N rows (applied after fetching from API, default: 0, used with limit)',
+          description: 'Skip first N rows',
           default: 0,
         },
         filterResponsibleFullName: {
           type: 'string',
-          description: 'Optional: Filter report rows by ResponsibleFullName column (case-insensitive partial match)',
+          description: 'Filter by responsible name',
         },
         filterStatusName: {
           type: 'string',
-          description: 'Optional: Filter report rows by StatusName column (case-insensitive partial match)',
+          description: 'Filter by status',
         },
         filterText: {
           type: 'string',
-          description: 'Optional: Search all text columns for this value (case-insensitive)',
+          description: 'Search all text columns',
         },
       },
       required: ['reportId'],
@@ -304,25 +274,25 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_get_user',
-    description: 'Get a TeamDynamix user by UID or username',
+    description: 'Get user by UID or username',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         uid: {
           type: 'string',
-          description: 'User UID (GUID) to retrieve',
+          description: 'User UID',
         },
         username: {
           type: 'string',
-          description: 'Username to retrieve (alternative to uid)',
+          description: 'Username',
         },
       },
     },
   },
   {
     name: 'tdx_get_current_user',
-    description: 'Get the currently authenticated TeamDynamix user (based on credentials)',
+    description: 'Get currently authenticated user',
     inputSchema: {
       type: 'object',
       properties: {
@@ -332,18 +302,18 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_search_users',
-    description: 'Search for TeamDynamix users',
+    description: 'Search users',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         searchText: {
           type: 'string',
-          description: 'Text to search for in user records (name, email, username)',
+          description: 'Search text',
         },
         maxResults: {
           type: 'number',
-          description: 'Maximum number of results to return (default: 50, max: 100)',
+          description: 'Max results',
           default: 50,
         },
       },
@@ -351,14 +321,14 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_get_user_uid',
-    description: 'Get a user UID (GUID) by username',
+    description: 'Get user UID by username',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         username: {
           type: 'string',
-          description: 'Username to look up',
+          description: 'Username',
         },
       },
       required: ['username'],
@@ -366,18 +336,18 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_search_groups',
-    description: 'Search for TeamDynamix groups',
+    description: 'Search groups',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         searchText: {
           type: 'string',
-          description: 'Text to search for in group names',
+          description: 'Search text',
         },
         maxResults: {
           type: 'number',
-          description: 'Maximum number of results to return (default: 50, max: 100)',
+          description: 'Max results',
           default: 50,
         },
       },
@@ -385,14 +355,14 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_get_group',
-    description: 'Get a TeamDynamix group by ID',
+    description: 'Get group by ID',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         groupId: {
           type: 'number',
-          description: 'Group ID to retrieve',
+          description: 'Group ID',
         },
       },
       required: ['groupId'],
@@ -400,17 +370,111 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_list_groups',
-    description: 'List all available TeamDynamix groups',
+    description: 'List all groups',
     inputSchema: {
       type: 'object',
       properties: {
         ...environmentParam,
         maxResults: {
           type: 'number',
-          description: 'Maximum number of results to return (default: 100)',
+          description: 'Max results',
           default: 100,
         },
       },
+    },
+  },
+  {
+    name: 'tdx_search_tickets',
+    description: 'Search tickets with lightweight results. Use for finding tickets with tasks assigned to you.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...environmentParam,
+        searchText: {
+          type: 'string',
+          description: 'Search text',
+        },
+        statusIDs: {
+          type: 'array',
+          items: { type: 'number' },
+          description: 'Status IDs',
+        },
+        priorityIDs: {
+          type: 'array',
+          items: { type: 'number' },
+          description: 'Priority IDs',
+        },
+        responsibilityUids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Responsible user UIDs (includes task responsibility)',
+        },
+        completedTaskResponsibilityFilter: {
+          type: 'boolean',
+          description: 'false = active tasks, true = completed tasks',
+        },
+        maxResults: {
+          type: 'number',
+          description: 'Max results',
+          default: 50,
+        },
+        ...appIdParam,
+      },
+    },
+  },
+  {
+    name: 'tdx_list_ticket_tasks',
+    description: 'Get all tasks on ticket. Returns lightweight task data.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...environmentParam,
+        ...ticketIdParam,
+        ...appIdParam,
+      },
+      required: ['ticketId'],
+    },
+  },
+  {
+    name: 'tdx_get_ticket_task',
+    description: 'Get specific task from ticket',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...environmentParam,
+        ...ticketIdParam,
+        ...taskIdParam,
+        ...appIdParam,
+      },
+      required: ['ticketId', 'taskId'],
+    },
+  },
+  {
+    name: 'tdx_update_ticket_task',
+    description: 'Update ticket task by adding comment',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...environmentParam,
+        ...ticketIdParam,
+        ...taskIdParam,
+        comments: {
+          type: 'string',
+          description: 'Comment text',
+        },
+        isPrivate: {
+          type: 'boolean',
+          description: 'Private comment',
+          default: false,
+        },
+        notify: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Email addresses to notify',
+        },
+        ...appIdParam,
+      },
+      required: ['ticketId', 'taskId', 'comments'],
     },
   },
 ];

@@ -1,5 +1,5 @@
 {
-  "name": "tdx-api-tickets-mcp",
+  "name": "tdx-tickets-mcp",
   "version": "1.0.0",
   "description": "MCP server for TeamDynamix Tickets, Reports, Users, and Groups API",
   "main": "dist/index.js",

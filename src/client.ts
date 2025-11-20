@@ -15,7 +15,9 @@ import type {
   UserSearchParams,
   Group,
   GroupSearchParams,
-  RetryConfig
+  RetryConfig,
+  TicketTask,
+  TaskFeedUpdate
 } from './types.js';
 
 const DEFAULT_RETRY_CONFIG: RetryConfig = {
@@ -534,5 +536,87 @@ export class TDXClient {
       MaxResults: maxResults
     });
     return response.data;
+  }
+
+  // ===== Ticket Tasks API Methods =====
+
+  /**
+   * Get all tasks on a ticket.
+   *
+   * @param ticketId - The ticket ID
+   * @param appIdOverride - Optional app ID to override discovery
+   * @returns Array of ticket tasks
+   */
+  async getTicketTasks(ticketId: number, appIdOverride?: string): Promise<TicketTask[]> {
+    const appId = appIdOverride || await this.findAppIdForTicket(ticketId);
+    const response = await this.client.get(`/api/${appId}/tickets/${ticketId}/tasks`);
+    return response.data;
+  }
+
+  /**
+   * Get a single task by ID from a ticket.
+   *
+   * @param ticketId - The ticket ID
+   * @param taskId - The task ID
+   * @param appIdOverride - Optional app ID to override discovery
+   * @returns The task data
+   */
+  async getTicketTask(ticketId: number, taskId: number, appIdOverride?: string): Promise<TicketTask> {
+    const appId = appIdOverride || await this.findAppIdForTicket(ticketId);
+    const response = await this.client.get(`/api/${appId}/tickets/${ticketId}/tasks/${taskId}`);
+    return response.data;
+  }
+
+  /**
+   * Update a ticket task via feed entry (adds comment/update).
+   *
+   * @param ticketId - The ticket ID
+   * @param taskId - The task ID
+   * @param update - Task update parameters (comments, privacy, notifications)
+   * @param appIdOverride - Optional app ID to override discovery
+   * @returns The updated task data
+   */
+  async updateTicketTask(
+    ticketId: number,
+    taskId: number,
+    update: TaskFeedUpdate,
+    appIdOverride?: string
+  ): Promise<any> {
+    const appId = appIdOverride || await this.findAppIdForTicket(ticketId);
+    const response = await this.client.post(
+      `/api/${appId}/tickets/${ticketId}/tasks/${taskId}/feed`,
+      update
+    );
+    return response.data;
+  }
+
+  /**
+   * Helper method to find which app ID a ticket belongs to.
+   * Checks cache first, then tries each configured app.
+   *
+   * @param ticketId - The ticket ID
+   * @returns The app ID where the ticket was found
+   * @throws Error if ticket not found in any configured app
+   */
+  private async findAppIdForTicket(ticketId: number): Promise<string> {
+    // Check cache first
+    const cachedAppId = this.ticketAppIdCache.get(ticketId);
+    if (cachedAppId) {
+      return cachedAppId;
+    }
+
+    // Try each appId
+    for (const appId of this.appIds) {
+      try {
+        await this.client.get(`/api/${appId}/tickets/${ticketId}`);
+        this.ticketAppIdCache.set(ticketId, appId);
+        return appId;
+      } catch (error) {
+        // Ticket not in this app, try next
+        continue;
+      }
+    }
+
+    throw new Error(`Ticket ${ticketId} not found in any configured app: ${this.appIds.join(', ')}`);
   }
 }

@@ -176,7 +176,7 @@ const handlers = new ToolHandlers(tdxClients, defaultEnvironment);
 // Create MCP server
 const server = new Server(
   {
-    name: 'tdx-api-tickets-mcp',
+    name: 'tdx-tickets-mcp',
     version: '1.0.0',
   },
   {
@@ -247,6 +247,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'tdx_list_groups':
         return await handlers.handleListGroups(args as any);
+
+      case 'tdx_search_tickets':
+        return await handlers.handleSearchTickets(args as any);
+
+      case 'tdx_list_ticket_tasks':
+        return await handlers.handleListTicketTasks(args as any);
+
+      case 'tdx_get_ticket_task':
+        return await handlers.handleGetTicketTask(args as any);
+
+      case 'tdx_update_ticket_task':
+        return await handlers.handleUpdateTicketTask(args as any);
 
       default:
         throw new Error(`Unknown tool: ${name}`);

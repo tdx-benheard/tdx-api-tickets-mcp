@@ -1,7 +1,7 @@
 # Ticket Workflow
 
 ## Prerequisites
-- **MCP Server**: `tdx-api-tickets-mcp` (https://github.com/tdx-benheard/tdx-api-tickets-mcp)
+- **MCP Server**: `tdx-tickets-mcp` (https://github.com/tdx-benheard/tdx-tickets-mcp)
 - **User Config**: See `CLAUDE.local.md` for username and report IDs
 - **Status IDs**: See MCP TOOLS.md or: 2=Open, 3=In Process, 191349=Pending Client Review, 568=Ready for Test, 5=Closed
 - **MCP Functions**: `tdx_run_report`, `tdx_get_ticket`, `tdx_update_ticket`, `tdx_add_ticket_feed`, `tdx_add_ticket_tags`

@@ -300,6 +300,81 @@ export interface GroupSearchParams {
 }
 
 /**
+ * Ticket task entity
+ */
+export interface TicketTask {
+  ID: number;
+  TicketID: number;
+  Title: string;
+  Description?: string;
+  IsActive: boolean;
+  NotifyResponsible?: boolean;
+  StartDate?: string;
+  EndDate?: string;
+  CompleteWithinMinutes?: number;
+  EstimatedMinutes?: number;
+  ActualMinutes?: number;
+  PercentComplete?: number;
+  CreatedDate?: string;
+  CreatedUid?: string;
+  CreatedFullName?: string;
+  CreatedEmail?: string;
+  ModifiedDate?: string;
+  ModifiedUid?: string;
+  ModifiedFullName?: string;
+  CompletedDate?: string;
+  CompletedUid?: string;
+  CompletedFullName?: string;
+  ResponsibleUid?: string;
+  ResponsibleFullName?: string;
+  ResponsibleEmail?: string;
+  ResponsibleGroupID?: number;
+  ResponsibleGroupName?: string;
+  PredecessorID?: number;
+  PredecessorTitle?: string;
+  Order?: number;
+  TypeID?: number;
+  StatusID?: number;
+  StatusName?: string;
+  Uri?: string;
+  [key: string]: any;
+}
+
+/**
+ * Lightweight task response (filtered for MCP)
+ */
+export interface LightweightTask {
+  ID: number;
+  Title: string;
+  StatusName?: string;
+  ResponsibleFullName?: string;
+  StartDate?: string;
+  EndDate?: string;
+  PercentComplete?: number;
+}
+
+/**
+ * Lightweight ticket search result (filtered for MCP)
+ */
+export interface LightweightTicket {
+  ID: number;
+  Title: string;
+  StatusName?: string;
+  ResponsibleFullName?: string;
+  ModifiedDate?: string;
+  PriorityName?: string;
+}
+
+/**
+ * Task update parameters (via feed)
+ */
+export interface TaskFeedUpdate {
+  Comments: string;
+  IsPrivate?: boolean;
+  Notify?: string[];
+}
+
+/**
  * API Error response
  */
 export interface ApiError {
@@ -406,6 +481,32 @@ export interface GetGroupArgs extends ToolArgs {
 
 export interface ListGroupsArgs extends ToolArgs {
   maxResults?: number;
+}
+
+export interface SearchTicketsArgs extends ToolArgs {
+  searchText?: string;
+  statusIDs?: number[];
+  priorityIDs?: number[];
+  responsibilityUids?: string[];
+  completedTaskResponsibilityFilter?: boolean;
+  maxResults?: number;
+}
+
+export interface ListTicketTasksArgs extends ToolArgs {
+  ticketId: number;
+}
+
+export interface GetTicketTaskArgs extends ToolArgs {
+  ticketId: number;
+  taskId: number;
+}
+
+export interface UpdateTicketTaskArgs extends ToolArgs {
+  ticketId: number;
+  taskId: number;
+  comments: string;
+  isPrivate?: boolean;
+  notify?: string[];
 }
 
 /**
