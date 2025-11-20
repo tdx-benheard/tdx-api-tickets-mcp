@@ -518,7 +518,16 @@ export class ToolHandlers {
     if (args?.searchText) searchParams.SearchText = args.searchText;
     if (args?.statusIDs) searchParams.StatusIDs = args.statusIDs;
     if (args?.priorityIDs) searchParams.PriorityIDs = args.priorityIDs;
+    if (args?.typeIDs) searchParams.TypeIDs = args.typeIDs;
+    if (args?.accountIDs) searchParams.AccountIDs = args.accountIDs;
+    if (args?.primaryResponsibilityUids) searchParams.PrimaryResponsibilityUids = args.primaryResponsibilityUids;
     if (args?.responsibilityUids) searchParams.ResponsibilityUids = args.responsibilityUids;
+    if (args?.requestorUids) searchParams.RequestorUids = args.requestorUids;
+    if (args?.parentTicketID) searchParams.ParentTicketID = args.parentTicketID;
+    if (args?.createdDateFrom) searchParams.CreatedDateFrom = args.createdDateFrom;
+    if (args?.createdDateTo) searchParams.CreatedDateTo = args.createdDateTo;
+    if (args?.modifiedDateFrom) searchParams.ModifiedDateFrom = args.modifiedDateFrom;
+    if (args?.modifiedDateTo) searchParams.ModifiedDateTo = args.modifiedDateTo;
     if (args?.completedTaskResponsibilityFilter !== undefined) {
       searchParams.CompletedTaskResponsibilityFilter = args.completedTaskResponsibilityFilter;
     }

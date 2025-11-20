@@ -236,12 +236,57 @@ async function testTagOperations() {
   }
 }
 
+async function testSearchTicketsByParent() {
+  console.log('\n👨‍👩‍👧‍👦 Testing: Search Child Tickets by ParentTicketID');
+  try {
+    // Known parent ticket with children: 29312329 (Dark mode issues catch all)
+    const parentTicketId = 29312329;
+    console.log(`   Searching for children of ticket #${parentTicketId}`);
+    console.log('   URL: POST', TDX_BASE_URL + `/api/${appIds[0]}/tickets/search`);
+
+    const children = await client.searchTickets({ ParentTicketID: parentTicketId });
+    const count = Array.isArray(children) ? children.length : 0;
+
+    // This parent ticket is known to have exactly 6 children
+    const expectedCount = 6;
+    const expectedChildIds = [29312356, 29316757, 29319009, 29334986, 29356843, 29312281];
+
+    if (count === 0) {
+      console.error('❌ No child tickets found (expected 6)');
+      return false;
+    }
+
+    console.log(`✅ Found ${count} child tickets`);
+
+    // Verify we got the expected children
+    const foundIds = children.map((t: any) => t.ID);
+    const allExpectedFound = expectedChildIds.every(id => foundIds.includes(id));
+
+    if (count === expectedCount && allExpectedFound) {
+      console.log(`✅ Correct number of children (${expectedCount})`);
+      console.log(`   Child tickets: ${foundIds.join(', ')}`);
+      return true;
+    } else {
+      console.error(`❌ Expected ${expectedCount} children with IDs: ${expectedChildIds.join(', ')}`);
+      console.error(`   Got ${count} children with IDs: ${foundIds.join(', ')}`);
+      return false;
+    }
+  } catch (error: any) {
+    console.error('❌ Error:', error.response?.status, error.message);
+    if (error.response?.data) {
+      console.error('   Response:', JSON.stringify(error.response.data).slice(0, 200));
+    }
+    return false;
+  }
+}
+
 async function runTests() {
   console.log('Starting production tests...\n');
 
   const results = {
     auth: await testAuth(),
     searchTickets: await testSearchTickets(),
+    searchByParent: await testSearchTicketsByParent(),
     listReports: await testListReports(),
     runReport: await testRunReport(),
     getTicket: await testGetTicket(),
@@ -251,13 +296,14 @@ async function runTests() {
 
   console.log('\n---');
   console.log('📈 Test Results:');
-  console.log(`   Authentication:    ${results.auth ? '✅' : '❌'}`);
-  console.log(`   Search Tickets:    ${results.searchTickets ? '✅' : '❌'}`);
-  console.log(`   List Reports:      ${results.listReports ? '✅' : '❌'}`);
-  console.log(`   Run Report:        ${results.runReport ? '✅' : '❌'}`);
-  console.log(`   Get Ticket:        ${results.getTicket ? '✅' : '❌'}`);
-  console.log(`   Get Ticket Feed:   ${results.getTicketFeed ? '✅' : '❌'}`);
-  console.log(`   Tag Operations:    ${results.tagOperations ? '✅' : '❌'}`);
+  console.log(`   Authentication:         ${results.auth ? '✅' : '❌'}`);
+  console.log(`   Search Tickets:         ${results.searchTickets ? '✅' : '❌'}`);
+  console.log(`   Search by ParentID:     ${results.searchByParent ? '✅' : '❌'}`);
+  console.log(`   List Reports:           ${results.listReports ? '✅' : '❌'}`);
+  console.log(`   Run Report:             ${results.runReport ? '✅' : '❌'}`);
+  console.log(`   Get Ticket:             ${results.getTicket ? '✅' : '❌'}`);
+  console.log(`   Get Ticket Feed:        ${results.getTicketFeed ? '✅' : '❌'}`);
+  console.log(`   Tag Operations:         ${results.tagOperations ? '✅' : '❌'}`);
 
   const passed = Object.values(results).filter(Boolean).length;
   const total = Object.values(results).length;
