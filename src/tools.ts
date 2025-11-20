@@ -385,7 +385,7 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_search_tickets',
-    description: 'Search tickets with lightweight results. Use for finding tickets with tasks assigned to you.',
+    description: 'Search tickets with lightweight results. Supports filtering by status, priority, type, dates, responsible users, requestors, and parent ticket.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -404,14 +404,54 @@ export const tools: Tool[] = [
           items: { type: 'number' },
           description: 'Priority IDs',
         },
+        typeIDs: {
+          type: 'array',
+          items: { type: 'number' },
+          description: 'Ticket type IDs',
+        },
+        accountIDs: {
+          type: 'array',
+          items: { type: 'number' },
+          description: 'Account/department IDs',
+        },
         responsibilityUids: {
           type: 'array',
           items: { type: 'string' },
           description: 'Responsible user UIDs (includes task responsibility)',
         },
+        primaryResponsibilityUids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Primary responsible user UIDs (excludes task responsibility)',
+        },
+        requestorUids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Requestor user UIDs',
+        },
+        parentTicketID: {
+          type: 'number',
+          description: 'Filter by parent ticket ID (find child tickets)',
+        },
         completedTaskResponsibilityFilter: {
           type: 'boolean',
           description: 'false = active tasks, true = completed tasks',
+        },
+        createdDateFrom: {
+          type: 'string',
+          description: 'Created date from (ISO 8601 format)',
+        },
+        createdDateTo: {
+          type: 'string',
+          description: 'Created date to (ISO 8601 format)',
+        },
+        modifiedDateFrom: {
+          type: 'string',
+          description: 'Modified date from (ISO 8601 format)',
+        },
+        modifiedDateTo: {
+          type: 'string',
+          description: 'Modified date to (ISO 8601 format)',
         },
         maxResults: {
           type: 'number',

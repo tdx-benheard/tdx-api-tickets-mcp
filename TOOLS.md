@@ -4,36 +4,11 @@ This document provides detailed information about all available MCP tools for Cl
 
 ## Best Practices
 
-**⚠️ IMPORTANT: Choose the Right Tool**
+**Choose the Right Tool:**
 
-- **Use `tdx_search_reports` + `tdx_run_report`** for ALL searching/listing of tickets (ALWAYS use this first!)
+- **Use `tdx_search_tickets`** for flexible ticket searching with multiple filter criteria
+- **Use `tdx_search_reports` + `tdx_run_report`** for pre-configured report views
 - **Use `tdx_get_ticket`** when you have a specific ticket ID and need complete details
-
-**Why?** Reports return only the columns configured, making them efficient for browsing. Once you have a ticket ID from a report, use `tdx_get_ticket` to get full details.
-
-**The Right Approach:**
-```javascript
-// DO: Search for reports first, then run with filters
-// Step 1: Find appropriate report
-tdx_search_reports({ searchText: "open tickets" })
-
-// Step 2: Run report with name filter
-tdx_run_report({
-  reportId: 279612,  // From step 1
-  withData: true,
-  filterResponsibleFullName: "Ben Heard",
-  page: 1,
-  pageSize: 50
-})
-```
-
-**Report Selection Best Practices:**
-- **Prefer "All Open Tickets"** - When searching for open tickets, prefer reports named "All Open Tickets" over team-specific reports (e.g., "Team Name - Open Tickets")
-- **Handle ambiguity gracefully** - When multiple reports match:
-  1. Use the general/global report (e.g., "All Open Tickets") and return results
-  2. At the end of results, mention other matching reports that were found (include report names and IDs)
-  3. Inform user they can query those other reports if interested, but don't anticipate or wait for action
-- **Global reports first** - Prefer global reports over team/project-specific reports unless user specifies otherwise
 
 ## Environment Selection
 
@@ -49,17 +24,33 @@ Example: `{ ticketId: 12345, environment: "dev" }`
 ## Ticket Management
 
 ### `tdx_search_tickets`
-Search for tickets with lightweight results (only ID, Title, Status, Responsible, Modified Date, Priority). **Use this for finding tickets with tasks assigned to you.**
+Search for tickets with lightweight results (only ID, Title, Status, Responsible, Modified Date, Priority). Supports extensive filtering by status, priority, type, dates, users, and parent tickets.
 
 **Parameters:**
 - `searchText` (string) - Text to search for
 - `statusIDs` (number[]) - Filter by status IDs (e.g., [2] for Open, [3] for In Process)
 - `priorityIDs` (number[]) - Filter by priority IDs
+- `typeIDs` (number[]) - Filter by ticket type IDs
+- `accountIDs` (number[]) - Filter by account/department IDs
 - `responsibilityUids` (string[]) - Filter by responsible user UIDs (includes task responsibility)
+- `primaryResponsibilityUids` (string[]) - Filter by primary responsible user UIDs (excludes task responsibility)
+- `requestorUids` (string[]) - Filter by requestor user UIDs
+- `parentTicketID` (number) - Filter by parent ticket ID (finds child tickets)
 - `completedTaskResponsibilityFilter` (boolean) - When used with responsibilityUids: false = active tasks, true = completed tasks
+- `createdDateFrom` (string) - Filter by created date from (ISO 8601 format)
+- `createdDateTo` (string) - Filter by created date to (ISO 8601 format)
+- `modifiedDateFrom` (string) - Filter by modified date from (ISO 8601 format)
+- `modifiedDateTo` (string) - Filter by modified date to (ISO 8601 format)
 - `maxResults` (number) - Default: 50, max: 1000
 - `appId` (string, optional)
 - `environment` (string, optional)
+
+**Example: Find child tickets of a parent:**
+```javascript
+tdx_search_tickets({
+  parentTicketID: 12345
+})
+```
 
 **Example: Find tickets with active tasks assigned to you:**
 ```javascript
@@ -70,6 +61,15 @@ tdx_get_current_user()
 tdx_search_tickets({
   responsibilityUids: ["your-uid-here"],
   completedTaskResponsibilityFilter: false
+})
+```
+
+**Example: Find tickets created in date range:**
+```javascript
+tdx_search_tickets({
+  createdDateFrom: "2025-01-01T00:00:00Z",
+  createdDateTo: "2025-01-31T23:59:59Z",
+  statusIDs: [2, 3]  // Open and In Process
 })
 ```
 
@@ -435,44 +435,44 @@ List all groups.
 
 ## Workflow Tips for Claude
 
-### Finding Someone's Tickets
+### Searching for Tickets
 
-**✅ Universal Workflow (Works on Any TDX Instance):**
+**Option 1: Direct Search (Flexible Filtering)**
+```javascript
+// Search tickets directly with multiple filters
+tdx_search_tickets({
+  statusIDs: [2, 3],  // Open and In Process
+  responsibilityUids: ["user-uid-here"],
+  createdDateFrom: "2025-01-01T00:00:00Z"
+})
+
+// Find child tickets
+tdx_search_tickets({
+  parentTicketID: 12345
+})
+```
+
+**Option 2: Report-Based Search (Pre-configured Views)**
 ```javascript
 // Step 1: Find an appropriate report
 tdx_search_reports({ searchText: "open tickets" })
-// Look for reports like:
-// - "All Open Tickets"
-// - "Open Tickets"
-// - "[Team Name] - Open Tickets"
-// Present options to user if multiple found
 
 // Step 2: Run the report with filtering
 tdx_run_report({
-  reportId: 273426,  // ID from step 1
+  reportId: 273426,
   withData: true,
   filterResponsibleFullName: "Ben Heard",
   page: 1,
   pageSize: 50
 })
-// Returns: Clean list with pagination metadata
-
-// Step 3 (Optional): Get full details for specific ticket
-tdx_get_ticket({ ticketId: 28803790 })
 ```
-
 
 ### When to Use Each Tool
 
-1. **Searching/listing/browsing tickets** → `tdx_search_reports` + `tdx_run_report` with filters (ALWAYS use this)
-2. **Getting specific ticket details** → `tdx_get_ticket` by ID (after finding ID in report)
-3. **Updating a ticket** → `tdx_update_ticket` or `tdx_edit_ticket`
-
-**Decision Tree:**
-- User asks to "find/search/list tickets" → Use `tdx_search_reports` + `tdx_run_report` with filters
-- User asks "show me Ben's tickets" → Use reports with `filterResponsibleFullName`
-- User asks "get ticket details for #12345" → Use `tdx_get_ticket`
-- User has ticket ID from report and needs full details → Use `tdx_get_ticket`
+1. **Searching with flexible criteria** → `tdx_search_tickets` (status, dates, parent ticket, etc.)
+2. **Using pre-configured report views** → `tdx_search_reports` + `tdx_run_report`
+3. **Getting specific ticket details** → `tdx_get_ticket` by ID
+4. **Updating a ticket** → `tdx_update_ticket` or `tdx_edit_ticket`
 
 ### Common Report Search Terms
 

@@ -95,6 +95,7 @@ export interface TicketSearchParams {
   ResponsibilityUids?: string[]; // Responsible person including task responsibility
   CompletedTaskResponsibilityFilter?: boolean; // Filter for completed (true) or active (false) task assignments
   RequestorUids?: string[];
+  ParentTicketID?: number; // Filter by parent ticket ID
   CreatedDateFrom?: string;
   CreatedDateTo?: string;
   ModifiedDateFrom?: string;
