@@ -65,7 +65,7 @@ export class ToolHandlers {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: `Ticket #${result.ID} "${result.Title}" edited successfully.`,
         },
       ],
     };
@@ -85,14 +85,13 @@ export class ToolHandlers {
     if (args.description) updateData.Description = args.description;
     if (args.comments) updateData.Comments = args.comments;
     if (args.responsibleUid) updateData.ResponsibleUid = args.responsibleUid;
-    if (args.tags) updateData.Tags = args.tags;
 
     const result = await client.updateTicket(args.ticketId, updateData, args?.appId);
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: `Ticket #${result.ID} "${result.Title}" updated successfully.`,
         },
       ],
     };
@@ -116,7 +115,7 @@ export class ToolHandlers {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: `Feed entry #${result.ID} added to ticket #${args.ticketId} successfully.`,
         },
       ],
     };

@@ -87,11 +87,6 @@ export const tools: Tool[] = [
           type: 'string',
           description: 'UID of the person to assign the ticket to',
         },
-        tags: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Array of tags to apply to the ticket',
-        },
         appId: {
           type: 'string',
           description: 'Optional: TeamDynamix application ID (overrides default and auto-detection)',
