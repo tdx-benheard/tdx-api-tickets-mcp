@@ -74,7 +74,6 @@ export interface TicketUpdate {
   PriorityID?: number;
   Title?: string;
   Description?: string;
-  Comments?: string;
   ResponsibleUid?: string;
   ResponsibleGroupID?: number;
   Tags?: string[];
@@ -280,6 +279,19 @@ export interface UserSearchParams {
 }
 
 /**
+ * Ticket Status entity
+ */
+export interface Status {
+  ID: number;
+  Name: string;
+  Description?: string;
+  Order: number;
+  StatusClass: number; // 1=Open, 2=In Progress, 3=Resolved, 4=Cancelled, 5=On Hold
+  IsActive?: boolean;
+  IsDefault?: boolean;
+}
+
+/**
  * Group entity
  */
 export interface Group {
@@ -409,10 +421,12 @@ export interface EditTicketArgs extends ToolArgs {
 export interface UpdateTicketArgs extends ToolArgs {
   ticketId: number;
   statusId?: number;
+  statusName?: string;
   priorityId?: number;
   title?: string;
   description?: string;
   comments?: string;
+  commentsPrivate?: boolean;
   responsibleUid?: string;
   tags?: string[];
 }
@@ -484,6 +498,8 @@ export interface GetGroupArgs extends ToolArgs {
 export interface ListGroupsArgs extends ToolArgs {
   maxResults?: number;
 }
+
+export interface ListStatusesArgs extends ToolArgs {}
 
 export interface SearchTicketsArgs extends ToolArgs {
   searchText?: string;

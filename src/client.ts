@@ -13,6 +13,7 @@ import type {
   User,
   UserLookup,
   UserSearchParams,
+  Status,
   Group,
   GroupSearchParams,
   RetryConfig,
@@ -549,6 +550,19 @@ export class TDXClient {
     const response = await this.client.post('/api/groups/search', {
       MaxResults: maxResults
     });
+    return response.data;
+  }
+
+  // ===== Ticket Statuses API Methods =====
+
+  /**
+   * List all active ticket statuses for an app.
+   *
+   * @param appId - The app ID to get statuses from
+   * @returns Array of status objects
+   */
+  async listStatuses(appId: string): Promise<Status[]> {
+    const response = await this.client.get(`/api/${appId}/tickets/statuses`);
     return response.data;
   }
 

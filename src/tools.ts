@@ -63,7 +63,7 @@ export const tools: Tool[] = [
   },
   {
     name: 'tdx_update_ticket',
-    description: 'Update ticket (partial update). To unassign a ticket, set responsibleUid to empty string ("").',
+    description: 'Update ticket (partial update). Comments automatically create a feed entry. To unassign, set responsibleUid to empty string ("").',
     inputSchema: {
       type: 'object',
       properties: {
@@ -71,7 +71,11 @@ export const tools: Tool[] = [
         ...ticketIdParam,
         statusId: {
           type: 'number',
-          description: 'Status ID',
+          description: 'Status ID (use this OR statusName, not both)',
+        },
+        statusName: {
+          type: 'string',
+          description: 'Status name (e.g., "Closed", "In Process") - automatically resolved to ID',
         },
         priorityId: {
           type: 'number',
@@ -87,7 +91,12 @@ export const tools: Tool[] = [
         },
         comments: {
           type: 'string',
-          description: 'Comments',
+          description: 'Comments (creates feed entry)',
+        },
+        commentsPrivate: {
+          type: 'boolean',
+          description: 'Make comment private (default: true)',
+          default: true,
         },
         responsibleUid: {
           type: 'string',
@@ -385,6 +394,17 @@ export const tools: Tool[] = [
           description: 'Max results',
           default: 100,
         },
+      },
+    },
+  },
+  {
+    name: 'tdx_list_statuses',
+    description: 'List all active ticket statuses',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...environmentParam,
+        ...appIdParam,
       },
     },
   },

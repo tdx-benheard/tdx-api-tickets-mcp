@@ -16,7 +16,8 @@ import type {
   GetUserUidArgs,
   SearchGroupsArgs,
   GetGroupArgs,
-  ListGroupsArgs
+  ListGroupsArgs,
+  ListStatusesArgs
 } from './types.js';
 
 export class ToolHandlers {
@@ -125,17 +126,64 @@ export class ToolHandlers {
       );
     }
 
+    // Validate status parameters
+    if (args.statusId !== undefined && args.statusName !== undefined) {
+      throw new Error('Cannot specify both statusId and statusName. Use one or the other.');
+    }
+
     const updateData: any = {};
 
-    if (args.statusId !== undefined) updateData.StatusID = args.statusId;
+    // Handle status name resolution
+    if (args.statusName !== undefined) {
+      // Get the ticket first to find its app ID
+      const ticket = await client.getTicket(args.ticketId, args?.appId);
+      const appId = ticket.AppID?.toString() || (client as any).appIds[0];
+
+      // Fetch statuses for that app
+      const statuses = await client.listStatuses(appId);
+
+      // Find matching status (case-insensitive)
+      const matchingStatus = statuses.find(
+        s => s.Name.toLowerCase() === args.statusName!.toLowerCase()
+      );
+
+      if (!matchingStatus) {
+        const availableNames = statuses.map(s => s.Name).join(', ');
+        throw new Error(
+          `Status "${args.statusName}" not found. Available statuses: ${availableNames}`
+        );
+      }
+
+      updateData.StatusID = matchingStatus.ID;
+    } else if (args.statusId !== undefined) {
+      updateData.StatusID = args.statusId;
+    }
     if (args.priorityId !== undefined) updateData.PriorityID = args.priorityId;
     if (args.title) updateData.Title = args.title;
     if (args.description) updateData.Description = args.description;
-    if (args.comments) updateData.Comments = args.comments;
+    // Note: Comments is NOT sent in updateData - it's not an actual API field
     // Allow empty string to unassign ticket
     if (args.responsibleUid !== undefined) updateData.ResponsibleUid = args.responsibleUid;
 
     const result = await client.updateTicket(args.ticketId, updateData, args?.appId);
+
+    // If comments provided, add as a separate feed entry (API doesn't support comments in update)
+    if (args.comments) {
+      try {
+        await client.addTicketFeedEntry(
+          args.ticketId,
+          {
+            Comments: args.comments,
+            IsPrivate: args.commentsPrivate !== false, // default true
+          },
+          args?.appId
+        );
+      } catch (error: any) {
+        throw new Error(
+          `Ticket updated successfully, but failed to add comment: ${error.message}`
+        );
+      }
+    }
 
     // Filter out bloated attribute choice data and return updated ticket details
     const filteredTicket = this.filterTicketAttributes(result);
@@ -144,7 +192,7 @@ export class ToolHandlers {
       content: [
         {
           type: 'text',
-          text: `Ticket #${result.ID} "${result.Title}" updated successfully.\n\nUpdated ticket details:\n${JSON.stringify(filteredTicket, null, 2)}`,
+          text: `Ticket #${result.ID} "${result.Title}" updated successfully.${args.comments ? ' Comment added to feed.' : ''}\n\nUpdated ticket details:\n${JSON.stringify(filteredTicket, null, 2)}`,
         },
       ],
     };
@@ -518,6 +566,42 @@ export class ToolHandlers {
         {
           type: 'text',
           text: JSON.stringify(groups, null, 2),
+        },
+      ],
+    };
+  }
+
+  async handleListStatuses(args: ListStatusesArgs) {
+    const client = this.getClient(args?.environment);
+    // Use appId if provided, otherwise use first configured app
+    const appId = args?.appId || (client as any).appIds[0];
+
+    const statuses = await client.listStatuses(appId);
+
+    // Format output in a readable table
+    let output = `Ticket Statuses (App ID: ${appId})\n\n`;
+    output += `ID\tClass\tOrder\tName\n`;
+    output += `${'─'.repeat(60)}\n`;
+
+    // Sort by Order for better readability
+    statuses.sort((a, b) => a.Order - b.Order);
+
+    statuses.forEach(status => {
+      output += `${status.ID}\t${status.StatusClass}\t${status.Order}\t${status.Name}\n`;
+    });
+
+    output += `\nStatus Classes:\n`;
+    output += `1 = Open/New\n`;
+    output += `2 = In Progress\n`;
+    output += `3 = Resolved/Closed\n`;
+    output += `4 = Cancelled\n`;
+    output += `5 = On Hold\n`;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: output,
         },
       ],
     };

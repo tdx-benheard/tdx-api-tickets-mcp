@@ -174,14 +174,37 @@ Partial ticket update (only specify fields to change). This is the preferred met
 
 **Parameters:**
 - `ticketId` (number, required)
-- `statusId` (number)
+- `statusId` (number) - Status ID (use this OR statusName)
+- `statusName` (string) - Status name like "Closed", "In Process" (automatically resolved to ID)
 - `priorityId` (number)
 - `title` (string)
 - `description` (string)
-- `comments` (string)
+- `comments` (string) - Automatically creates a feed entry (appears as separate comment after update)
+- `commentsPrivate` (boolean) - Make comment private (default: true)
 - `responsibleUid` (string) - Assign to individual user, or set to `""` (empty string) to unassign
 - `appId` (string, optional)
 - `environment` (string, optional)
+
+**Setting Status by Name:**
+You can use status names instead of IDs:
+```javascript
+tdx_update_ticket({
+  ticketId: 29290570,
+  statusName: "Closed",
+  comments: "Issue resolved"
+})
+```
+
+**Available Status Names** (App 129):
+- Open
+- In Process
+- Pending Customer Review
+- Ready for Test
+- Closed
+- Closed and Approved
+- Cancelled
+- On Hold
+- Enhancement Request
 
 **Unassigning a Ticket:**
 To remove the responsible user from a ticket, set `responsibleUid` to an empty string:
@@ -194,8 +217,11 @@ tdx_update_ticket({
 ```
 
 **Notes:**
+- **Comments create a feed entry automatically** - The comment appears as a separate feed entry after the system's automatic change messages (e.g., "Changed Status from X to Y" then your comment)
 - This tool only supports assigning to individual users. To assign to a group, use `tdx_edit_ticket` with `ResponsibleGroupID`.
 - **Tag operations are not supported.** Use `tdx_add_ticket_tags` to add tags or `tdx_delete_ticket_tags` to remove tags.
+- Status names are case-insensitive
+- Use `tdx_list_statuses` to see all available statuses for an app
 
 ---
 
@@ -475,16 +501,62 @@ List all groups.
 
 ---
 
+### `tdx_list_statuses`
+List all active ticket statuses for an application.
+
+**Parameters:**
+- `appId` (string, optional) - App ID to get statuses from (uses first configured app if not provided)
+- `environment` (string, optional)
+
+**Returns:** Formatted table showing ID, Class, Order, and Name for each status, plus status class legend.
+
+**Example:**
+```javascript
+tdx_list_statuses({
+  appId: "129"
+})
+```
+
+**Output:**
+```
+Ticket Statuses (App ID: 129)
+
+ID      Class   Order   Name
+────────────────────────────────────────────────────────────
+2       1       2       Open
+3       2       3       In Process
+191349  5       3       Pending Customer Review
+568     2       4       Ready for Test
+5       3       5       Closed
+6       3       6       Closed and Approved
+711     4       8       Cancelled
+712     5       9       On Hold
+1363    1       10      Enhancement Request
+
+Status Classes:
+1 = Open/New
+2 = In Progress
+3 = Resolved/Closed
+4 = Cancelled
+5 = On Hold
+```
+
+---
+
 ## Common Status and Priority IDs
 
-**Status IDs:**
-- 2 = Open
-- 3 = In Process
-- 5 = Closed
-- 6 = Closed and Approved
-- 711 = Cancelled
-- 191349 = Pending Client Review (custom)
-- 568 = Ready for Test (custom)
+**Status IDs** (App 129):
+- 2 = Open (Class 1)
+- 3 = In Process (Class 2)
+- 191349 = Pending Customer Review (Class 5, custom)
+- 568 = Ready for Test (Class 2, custom)
+- 5 = Closed (Class 3)
+- 6 = Closed and Approved (Class 3)
+- 711 = Cancelled (Class 4)
+- 712 = On Hold (Class 5)
+- 1363 = Enhancement Request (Class 1)
+
+**Note:** Status IDs may vary by app. Core statuses (2, 3, 5, 6, 711) are standard across apps, but custom statuses (191349, 568, 712, 1363) are app-specific. Use `tdx_list_statuses` to see statuses for a specific app.
 
 **Priority IDs:**
 - 8 = Low

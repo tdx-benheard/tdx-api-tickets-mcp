@@ -248,6 +248,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'tdx_list_groups':
         return await handlers.handleListGroups(args as any);
 
+      case 'tdx_list_statuses':
+        return await handlers.handleListStatuses(args as any);
+
       case 'tdx_search_tickets':
         return await handlers.handleSearchTickets(args as any);
 
